@@ -50,5 +50,5 @@ Este arquivo mantém o estado vivo da implementação do **C0rt3x Core** para de
 - [x] `session_manager.py` — Gerenciador de sessões por usuário
 - [x] `slave_power.py` — Orquestrador Wake-on-LAN S3
 - [x] `cognitive_router.py` & `tools/` — Roteador híbrido + Tool Registry
-- [ ] `memory_engine.py` — Memória em 3 camadas no `postgres-domus`
+- [x] `memory_engine.py` — Memória em 3 camadas no `postgres-domus`
 - [ ] `main.py` — API FastAPI + WebSocket Full-Duplex v2 + Deploy Docker no Domus
