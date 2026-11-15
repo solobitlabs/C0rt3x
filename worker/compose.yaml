@@ -11,6 +11,8 @@ services:
       - OLLAMA_KEEP_ALIVE=10m
     volumes:
       - ./ollama_data:/root/.ollama
+    ports:
+      - "127.0.0.1:11434:11434"
     networks:
       - cortex_worker_net
 
@@ -32,6 +34,25 @@ services:
       - ollama
     networks:
       - cortex_worker_net
+
+  domus-cortex-daemon:
+    build:
+      context: ${DAEMON_BUILD_CONTEXT:-../daemon}
+      dockerfile: Dockerfile
+    image: domus-cortex-daemon:latest
+    container_name: domus_cortex_daemon
+    restart: unless-stopped
+    pid: "host"
+    network_mode: "host"
+    mem_limit: 128m
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - .env
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
 
 networks:
   cortex_worker_net:
