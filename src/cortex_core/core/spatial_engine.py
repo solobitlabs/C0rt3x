@@ -156,7 +156,20 @@ class SpatialEngine:
                 score=0.0,
             )
 
-        best_zone, best_score = max(scores.items(), key=lambda item: item[1])
+        # Desempate por sinal mais recente na zona vencedora
+        with self._lock:
+            clean_user = user_id.strip().lower()
+            zone_latest: Dict[str, float] = {}
+            for sig in self._signals.values():
+                if sig.user_id == clean_user and sig.room in scores:
+                    prev = zone_latest.get(sig.room, -1.0)
+                    if sig.recorded_at > prev:
+                        zone_latest[sig.room] = sig.recorded_at
+
+        best_zone, best_score = max(
+            scores.items(),
+            key=lambda item: (item[1], zone_latest.get(item[0], -1.0)),
+        )
         if best_zone == EXTERNAL_ZONE:
             return OutputTarget(
                 zone=EXTERNAL_ZONE,
