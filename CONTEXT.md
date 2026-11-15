@@ -48,7 +48,7 @@ Este arquivo mantém o estado vivo da implementação do **C0rt3x Core** para de
 - [x] `config.py` — Configuração tipada e sanitizada
 - [x] `spatial_engine.py` — Motor espacial Follow-Me
 - [x] `session_manager.py` — Gerenciador de sessões por usuário
-- [x] `slave_power.py` — Orquestrador Wake-on-LAN S3
+- [x] `slave_power.py` — Orquestrador Wake-on-LAN S3 e modo passivo autenticado via Tailnet (`CORTEX_SLAVE_API_TOKEN`)
 - [x] `cognitive_router.py` & `tools/` — Roteador híbrido + Tool Registry
 - [x] `memory_engine.py` — Memória em 3 camadas no `postgres-domus`
 - [x] `main.py` — API FastAPI + WebSocket Full-Duplex v2 + Deploy Docker no Domus

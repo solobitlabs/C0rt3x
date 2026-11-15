@@ -25,10 +25,11 @@ class CortexSettings(BaseSettings):
     # Banco de dados (postgres-domus na rede interna domus_db)
     database_url: Optional[str] = None
 
-    # PC Gamer Slave (Worker GPU sob demanda via S3 Wake-on-LAN)
+    # PC Gamer Slave (Worker GPU sob demanda via Tailnet ou S3 Wake-on-LAN)
     slave_mac: str = ""
     slave_host: str = ""
     slave_port: int = 8090
+    slave_api_token: str = ""
     slave_wol_port: int = 9
     slave_broadcast_ip: str = "255.255.255.255"
     slave_idle_timeout_seconds: int = Field(default=600, ge=30, le=86400)
@@ -74,7 +75,8 @@ class CortexSettings(BaseSettings):
             "app_name": self.app_name,
             "log_level": self.log_level,
             "database_configured": bool(self.database_url),
-            "slave_configured": bool(self.slave_mac and self.slave_host),
+            "slave_configured": bool(self.slave_host),
+            "slave_wol_enabled": bool(self.slave_mac and self.slave_host),
             "slave_idle_timeout_seconds": self.slave_idle_timeout_seconds,
             "apprise_url": self.apprise_url,
             "despensa_configured": bool(self.despensa_api_token),

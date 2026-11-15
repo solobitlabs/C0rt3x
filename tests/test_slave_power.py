@@ -79,3 +79,28 @@ async def test_wake_on_lan_and_idle_sleep_cycle() -> None:
     assert await mgr.sleep_if_idle() is True
     assert mgr.state == SlaveState.SLEEPING_S3
     assert len(sleep_calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_tailnet_passive_mode_without_wol_mac() -> None:
+    is_up = False
+
+    async def probe(_url: str) -> bool:
+        return is_up
+
+    mgr = SlavePowerManager(
+        slave_mac="",
+        slave_host="100.x.y.50",
+        slave_api_token="tok-tailnet",
+        health_probe=probe,
+    )
+    assert mgr.auth_headers == {"Authorization": "Bearer tok-tailnet"}
+    assert mgr.state == SlaveState.OFFLINE
+    assert await mgr.ensure_online() is False
+    assert mgr.state == SlaveState.OFFLINE
+
+    is_up = True
+    assert await mgr.ensure_online() is True
+    assert mgr.state == SlaveState.ONLINE_IDLE
+    # Em modo passivo sem WoL, nao envia comando de sleep automatico
+    assert await mgr.sleep_if_idle() is False

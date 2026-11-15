@@ -56,7 +56,11 @@ class CognitiveRouter:
             "tools": self._tools.list_tools(),
         }
         async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(f"{self._slave.base_url}/api/infer", json=payload)
+            resp = await client.post(
+                f"{self._slave.base_url}/api/infer",
+                json=payload,
+                headers=self._slave.auth_headers,
+            )
             resp.raise_for_status()
             data = resp.json()
             return str(data.get("text") or "Certo.")

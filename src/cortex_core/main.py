@@ -71,6 +71,7 @@ class CortexRuntime:
             slave_mac=settings.slave_mac,
             slave_host=settings.slave_host,
             slave_port=settings.slave_port,
+            slave_api_token=settings.slave_api_token,
             broadcast_ip=settings.slave_broadcast_ip,
             wol_port=settings.slave_wol_port,
             idle_timeout_seconds=settings.slave_idle_timeout_seconds,

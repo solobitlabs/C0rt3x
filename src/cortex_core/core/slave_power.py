@@ -16,6 +16,7 @@ class SlaveState(str, Enum):
     """Estados operacionais do worker GPU."""
 
     UNCONFIGURED = "UNCONFIGURED"
+    OFFLINE = "OFFLINE"
     SLEEPING_S3 = "SLEEPING_S3"
     WAKING_WOL = "WAKING_WOL"
     ONLINE_IDLE = "ONLINE_IDLE"
@@ -51,6 +52,7 @@ class SlavePowerManager:
         slave_mac: str,
         slave_host: str,
         slave_port: int = 8090,
+        slave_api_token: str = "",
         broadcast_ip: str = "255.255.255.255",
         wol_port: int = 9,
         idle_timeout_seconds: int = 600,
@@ -64,6 +66,7 @@ class SlavePowerManager:
         self._mac = slave_mac.strip()
         self._host = slave_host.strip()
         self._port = slave_port
+        self._api_token = slave_api_token.strip()
         self._broadcast_ip = broadcast_ip
         self._wol_port = wol_port
         self._idle_timeout = idle_timeout_seconds
@@ -75,7 +78,12 @@ class SlavePowerManager:
         self._health_probe = health_probe or self._default_health_probe
         self._sleep_trigger = sleep_trigger or self._default_sleep_trigger
 
-        self._state = SlaveState.SLEEPING_S3 if (self._mac and self._host) else SlaveState.UNCONFIGURED
+        if not self._host:
+            self._state = SlaveState.UNCONFIGURED
+        elif self._mac:
+            self._state = SlaveState.SLEEPING_S3
+        else:
+            self._state = SlaveState.OFFLINE
         self._last_activity_at = self._clock()
         self._lock = asyncio.Lock()
 
@@ -87,10 +95,16 @@ class SlavePowerManager:
     def base_url(self) -> str:
         return f"http://{self._host}:{self._port}"
 
+    @property
+    def auth_headers(self) -> dict[str, str]:
+        if not self._api_token:
+            return {}
+        return {"Authorization": f"Bearer {self._api_token}"}
+
     async def _default_health_probe(self, url: str) -> bool:
         try:
             async with httpx.AsyncClient(timeout=1.5) as client:
-                resp = await client.get(f"{url}/health")
+                resp = await client.get(f"{url}/health", headers=self.auth_headers)
                 return resp.status_code == 200
         except httpx.HTTPError:
             return False
@@ -98,13 +112,13 @@ class SlavePowerManager:
     async def _default_sleep_trigger(self, url: str) -> bool:
         try:
             async with httpx.AsyncClient(timeout=3.0) as client:
-                resp = await client.post(f"{url}/system/sleep")
+                resp = await client.post(f"{url}/system/sleep", headers=self.auth_headers)
                 return resp.status_code in (200, 202, 204)
         except httpx.HTTPError:
             return False
 
     async def ensure_online(self) -> bool:
-        """Garante que o PC Gamer esteja acordado para inferencia."""
+        """Garante que o PC Gamer esteja acordado para inferencia (ou testa disponibilidade na Tailnet)."""
         if self._state == SlaveState.UNCONFIGURED:
             return False
 
@@ -113,6 +127,11 @@ class SlavePowerManager:
                 self._state = SlaveState.ONLINE_IDLE
                 self._last_activity_at = self._clock()
                 return True
+
+            # Modo Tailnet passivo (sem MAC/WoL configurado): apenas reporta offline sem bloquear
+            if not self._mac:
+                self._state = SlaveState.OFFLINE
+                return False
 
             self._state = SlaveState.WAKING_WOL
             logger.info("Enviando Magic Packet WoL para o PC Gamer Slave (%s)", self._mac)
@@ -142,8 +161,8 @@ class SlavePowerManager:
             self._last_activity_at = self._clock()
 
     async def sleep_if_idle(self) -> bool:
-        """Coloca o PC Gamer em suspensao S3 se o tempo de ociosidade foi atingido."""
-        if self._state != SlaveState.ONLINE_IDLE:
+        """Coloca o PC Gamer em suspensao S3 se WoL/auto-sleep estiver ativo e ocioso."""
+        if self._state != SlaveState.ONLINE_IDLE or not self._mac:
             return False
 
         elapsed = self._clock() - self._last_activity_at
