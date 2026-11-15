@@ -52,3 +52,4 @@ Este arquivo mantém o estado vivo da implementação do **C0rt3x Core** para de
 - [x] `cognitive_router.py` & `tools/` — Roteador híbrido + Tool Registry
 - [x] `memory_engine.py` — Memória em 3 camadas no `postgres-domus`
 - [x] `main.py` — API FastAPI + WebSocket Full-Duplex v2 + Deploy Docker no Domus
+- [x] `worker/` — Stack `C0rt3x Compute` (`ollama/ollama:rocm` + API autenticada `:8090`) para GPU AMD RX 7600 via Tailnet
