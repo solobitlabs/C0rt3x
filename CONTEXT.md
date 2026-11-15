@@ -46,7 +46,7 @@ Este arquivo mantém o estado vivo da implementação do **C0rt3x Core** para de
 ## 3. Status da Implementação (Fase 1)
 - [x] Documentação arquitetural, ADRs e GitHub Pages (`https://solobit.com.br/C0rt3x/`)
 - [x] `config.py` — Configuração tipada e sanitizada
-- [ ] `spatial_engine.py` — Motor espacial Follow-Me
+- [x] `spatial_engine.py` — Motor espacial Follow-Me
 - [ ] `session_manager.py` — Gerenciador de sessões por usuário
 - [ ] `slave_power.py` — Orquestrador Wake-on-LAN S3
 - [ ] `cognitive_router.py` & `tools/` — Roteador híbrido + Tool Registry
