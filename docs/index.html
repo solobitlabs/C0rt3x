@@ -1,0 +1,2311 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C0rt3x &amp; C0rt3x Core — Dashboard Arquitetural &amp; Viabilidade (Domus Server)</title>
+  <meta name="theme-color" content="#0b0f19">
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            domus: {
+              bg: '#0b0f19',
+              card: '#111827',
+              panel: '#0f172a',
+              border: '#1f293d',
+              accent: '#38bdf8',
+              emerald: '#10b981',
+              amber: '#f59e0b',
+              purple: '#8b5cf6',
+              rose: '#f43f5e'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Chart.js via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Lucide Icons via CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Mermaid.js v10 via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+  <style>
+    body {
+      background-color: #0b0f19;
+      color: #f3f4f6;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #1f293d;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+    .pulse-live {
+      animation: pulse-cyan 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse-cyan {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(1.2); }
+    }
+    .mermaid-container svg {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+    .glass-card {
+      background: linear-gradient(180deg, rgba(17, 24, 39, 0.96) 0%, rgba(15, 23, 42, 0.92) 100%);
+      border: 1px solid #1f293d;
+    }
+    .tab-btn.active {
+      background-color: rgba(56, 189, 248, 0.14);
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.45);
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.12);
+    }
+    .room-card {
+      transition: all 0.25s ease;
+    }
+    .room-active-will {
+      border-color: #38bdf8 !important;
+      box-shadow: 0 0 24px rgba(56, 189, 248, 0.22);
+      background: linear-gradient(180deg, rgba(14, 116, 144, 0.20) 0%, rgba(17, 24, 39, 0.95) 100%);
+    }
+    .room-active-output {
+      border-color: #10b981 !important;
+      box-shadow: 0 0 24px rgba(16, 185, 129, 0.25);
+    }
+    .module-pill.active {
+      background-color: rgba(56, 189, 248, 0.15);
+      border-color: #38bdf8;
+      color: #f8fafc;
+    }
+    .tree-item.active {
+      background-color: rgba(56, 189, 248, 0.14);
+      color: #38bdf8;
+    }
+    @media print {
+      header, #nav-bar, .no-print { display: none !important; }
+      .tab-section { display: block !important; page-break-inside: avoid; margin-bottom: 2rem; }
+      body { background: #0b0f19 !important; color: #f3f4f6 !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-sky-500/30 selection:text-sky-200">
+
+  <!-- TOP HEADER -->
+  <header class="border-b border-domus-border bg-domus-card/90 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center relative shrink-0">
+          <i data-lucide="brain-circuit" class="w-6 h-6 text-domus-accent"></i>
+          <span class="w-2.5 h-2.5 rounded-full bg-domus-emerald absolute -top-1 -right-1 pulse-live ring-2 ring-domus-card"></span>
+        </div>
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white">C0rt3x &amp; C0rt3x Core</h1>
+            <span class="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+              Blueprint Arquitetural v1.0
+            </span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-400">
+            Parecer Técnico de Viabilidade &amp; Arquitetura Master/Slave — Domus Server + PC Gamer GPU
+          </p>
+        </div>
+      </div>
+
+      <!-- Hardware Snapshot & Mode Toggle -->
+      <div class="flex flex-wrap items-center gap-2.5">
+        <div class="hidden xl:flex items-center gap-3 text-xs text-slate-300 bg-domus-bg/90 border border-domus-border px-3 py-1.5 rounded-lg mono">
+          <span class="flex items-center gap-1.5 text-sky-400"><i data-lucide="cpu" class="w-3.5 h-3.5"></i> i5-4590 (4c)</span>
+          <span class="text-slate-600">|</span>
+          <span class="flex items-center gap-1.5 text-emerald-400"><i data-lucide="memory-stick" class="w-3.5 h-3.5"></i> 7.2 GiB RAM (4.2 free)</span>
+          <span class="text-slate-600">|</span>
+          <span class="flex items-center gap-1.5 text-amber-400"><i data-lucide="disc-3" class="w-3.5 h-3.5"></i> /dev/sr0 DVD-RW</span>
+          <span class="text-slate-600">|</span>
+          <span class="flex items-center gap-1.5 text-purple-400"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> 2 Mundos</span>
+        </div>
+
+        <button id="btn-expand-all" onclick="toggleExpandAll()" class="flex items-center gap-2 text-xs font-medium px-3.5 py-2 rounded-lg border border-domus-border bg-domus-bg hover:border-sky-500/50 hover:text-sky-300 transition-colors cursor-pointer">
+          <i data-lucide="layers" class="w-4 h-4 text-sky-400"></i>
+          <span id="expand-all-label">Modo Documento Completo</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- NAVIGATION TABS -->
+    <nav id="nav-bar" class="max-w-7xl mx-auto px-4 sm:px-6 pb-3 flex items-center gap-2 overflow-x-auto custom-scrollbar">
+      <button onclick="switchTab('tab-overview')" data-tab="tab-overview" class="tab-btn active shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium border border-domus-border text-slate-300 hover:text-white transition-all cursor-pointer">
+        <i data-lucide="radar" class="w-4 h-4"></i>
+        1. Viabilidade &amp; Visão Macro
+      </button>
+      <button onclick="switchTab('tab-core')" data-tab="tab-core" class="tab-btn shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium border border-domus-border text-slate-300 hover:text-white transition-all cursor-pointer">
+        <i data-lucide="cpu" class="w-4 h-4"></i>
+        2. C0rt3x Core (7 Módulos)
+      </button>
+      <button onclick="switchTab('tab-sim-follow')" data-tab="tab-sim-follow" class="tab-btn shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium border border-domus-border text-slate-300 hover:text-white transition-all cursor-pointer">
+        <i data-lucide="footprints" class="w-4 h-4"></i>
+        3. Simulador: Follow-Me (Cozinha → Rua)
+      </button>
+      <button onclick="switchTab('tab-sim-cd')" data-tab="tab-sim-cd" class="tab-btn shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium border border-domus-border text-slate-300 hover:text-white transition-all cursor-pointer">
+        <i data-lucide="disc-3" class="w-4 h-4"></i>
+        4. Simulador: CD /dev/sr0 &amp; Multi-Room
+      </button>
+      <button onclick="switchTab('tab-contracts')" data-tab="tab-contracts" class="tab-btn shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium border border-domus-border text-slate-300 hover:text-white transition-all cursor-pointer">
+        <i data-lucide="file-code-2" class="w-4 h-4"></i>
+        5. WebSocket v2, RAM &amp; Roadmap
+      </button>
+    </nav>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-8">
+
+    <!-- =================================================================== -->
+    <!-- ABA 1: VISÃO GERAL & VIABILIDADE                                    -->
+    <!-- =================================================================== -->
+    <section id="tab-overview" class="tab-section space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-domus-border pb-4">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-widest text-sky-400">Seção 01 • Parecer Técnico</span>
+          <h2 class="text-2xl font-bold text-white mt-0.5">Análise de Viabilidade &amp; Topologia em 3 Camadas</h2>
+          <p class="text-sm text-slate-400 mt-1">
+            Avaliação baseada na inspeção real de <code class="mono text-sky-300">/srv/domus</code>, nos apps Android existentes e no hardware do servidor.
+          </p>
+        </div>
+        <div class="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-4 py-2 rounded-xl shrink-0">
+          <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>
+          <div>
+            <div class="text-xs text-emerald-300 font-semibold">Veredito: Altamente Viável</div>
+            <div class="text-[11px] text-slate-300">~60% da infraestrutura base já operacional</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Score Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="glass-card rounded-xl p-4 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium text-slate-400">Master/Slave + WoL (S3)</span>
+            <span class="px-2 py-0.5 text-xs font-bold rounded bg-sky-500/15 text-sky-400 border border-sky-500/30">9.5 / 10</span>
+          </div>
+          <p class="text-sm font-semibold text-white">Domus 24/7 + PC Gamer sob demanda</p>
+          <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+            Suspensão S3 (~2–5W) acorda via Magic Packet em 2–3s com VRAM pré-aquecida. Evita gasto contínuo de GPU 24h.
+          </p>
+          <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+            <div class="bg-sky-400 h-full rounded-full" style="width: 95%"></div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-4 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium text-slate-400">Handoff Espacial Follow-Me</span>
+            <span class="px-2 py-0.5 text-xs font-bold rounded bg-purple-500/15 text-purple-400 border border-purple-500/30">8.5 / 10</span>
+          </div>
+          <p class="text-sm font-semibold text-white">Cozinha → Sala → Banheiro → Rua</p>
+          <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+            Sessão centrada no usuário no servidor + WebSocket &lt;15ms já pronto no <code class="mono text-purple-300">domus-node-sdk</code>. Exige fusão de câmera/voz/radar.
+          </p>
+          <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+            <div class="bg-purple-400 h-full rounded-full" style="width: 85%"></div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-4 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium text-slate-400">Integração Domus &amp; SoloBit</span>
+            <span class="px-2 py-0.5 text-xs font-bold rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">10 / 10</span>
+          </div>
+          <p class="text-sm font-semibold text-white">Despensa, Carteira, IoT &amp; Apprise</p>
+          <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+            C0rt3x nasce isolado em <code class="mono text-emerald-300">domus_internal</code> e consome Despensa/Carteira via Tool Calling HTTPS sem quebrar os Dois Mundos.
+          </p>
+          <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+            <div class="bg-emerald-400 h-full rounded-full" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-4 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium text-slate-400">Drive /dev/sr0 &amp; Multi-Room</span>
+            <span class="px-2 py-0.5 text-xs font-bold rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">9.5 / 10</span>
+          </div>
+          <p class="text-sm font-semibold text-white">CD/DVD Proativo + Áudio Sincronizado</p>
+          <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+            Drive <code class="mono text-amber-300">PLDS DVD+/-RW DS-8ABSH</code> já detectado no kernel Linux. <code class="mono">udev + libdiscid + MusicBrainz</code> + Music Assistant.
+          </p>
+          <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+            <div class="bg-amber-400 h-full rounded-full" style="width: 95%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- What Already Exists -->
+      <div class="glass-card rounded-xl p-5">
+        <div class="flex items-center gap-2.5 mb-4">
+          <i data-lucide="blocks" class="w-5 h-5 text-emerald-400"></i>
+          <h3 class="text-base font-bold text-white">O que já existe pronto hoje em <code class="mono text-sky-300">/srv/domus</code> (~60% da base)</h3>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+          <div class="bg-domus-bg/80 border border-domus-border rounded-lg p-3.5">
+            <div class="font-semibold text-sky-400 flex items-center gap-1.5 mb-1.5">
+              <i data-lucide="server" class="w-4 h-4"></i> Hardware &amp; Óptico
+            </div>
+            <ul class="space-y-1 text-slate-300">
+              <li>• Intel Core i5-4590 (4 threads @ 3.30GHz)</li>
+              <li>• 7.2 GiB RAM (~4.2 GiB disponíveis)</li>
+              <li>• SSD 238.5 GiB + Swap 4.0 GiB</li>
+              <li>• Drive <code class="mono text-amber-300">/dev/sr0</code> PLDS DVD+/-RW ativo</li>
+            </ul>
+          </div>
+          <div class="bg-domus-bg/80 border border-domus-border rounded-lg p-3.5">
+            <div class="font-semibold text-emerald-400 flex items-center gap-1.5 mb-1.5">
+              <i data-lucide="network" class="w-4 h-4"></i> Borda "Dois Mundos"
+            </div>
+            <ul class="space-y-1 text-slate-300">
+              <li>• Tailscale VPN (<code class="mono">100.x.y.10</code>) + Split DNS</li>
+              <li>• AdGuard Home + Traefik v3 TLS Wildcard</li>
+              <li>• Redes Docker isoladas (<code class="mono">domus_internal</code>, <code class="mono">domus_db</code>, <code class="mono">notify_bus</code>)</li>
+              <li>• Backup Restic + pg_dump automatizados</li>
+            </ul>
+          </div>
+          <div class="bg-domus-bg/80 border border-domus-border rounded-lg p-3.5">
+            <div class="font-semibold text-purple-400 flex items-center gap-1.5 mb-1.5">
+              <i data-lucide="smartphone" class="w-4 h-4"></i> SDK Android &amp; Edge Nodes
+            </div>
+            <ul class="space-y-1 text-slate-300">
+              <li>• <code class="mono">domus-node-sdk</code> com <code class="mono">DomusWebSocketChannel</code> (&lt;15ms)</li>
+              <li>• <code class="mono">BaseDomusDaemonService</code> + Auto-reconnect</li>
+              <li>• <code class="mono">domus-tv</code> e <code class="mono">domus-mobile</code> compilando</li>
+              <li>• <code class="mono">NodeConnectionManager</code> ativo no dashboard</li>
+            </ul>
+          </div>
+          <div class="bg-domus-bg/80 border border-domus-border rounded-lg p-3.5">
+            <div class="font-semibold text-amber-400 flex items-center gap-1.5 mb-1.5">
+              <i data-lucide="database" class="w-4 h-4"></i> Dados, IoT &amp; Mensageria
+            </div>
+            <ul class="space-y-1 text-slate-300">
+              <li>• <code class="mono">postgres-domus</code> (PG 15) + <code class="mono">postgres-solobit</code></li>
+              <li>• <code class="mono">Apprise</code> (Telegram privado + Zoho HTML)</li>
+              <li>• <code class="mono">Minha Despensa</code> &amp; <code class="mono">Carteira</code> em produção</li>
+              <li>• <code class="mono">AirPower</code> &amp; <code class="mono">ThingsBoard</code> para telemetria</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mermaid Diagram 1: 3-Layer Macro Topology -->
+      <div class="glass-card rounded-xl p-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="git-fork" class="w-5 h-5 text-sky-400"></i>
+              Diagrama 1 — Topologia Macro do Ecossistema C0rt3x (3 Camadas Físicas)
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Separação entre Borda (Edge), Orquestração 24/7 (C0rt3x Core no Domus) e Inferência GPU Sob Demanda (PC Gamer Slave).
+            </p>
+          </div>
+          <button onclick="openDiagramModal('m1', 'Diagrama 1 — Topologia Macro do Ecossistema C0rt3x')" class="no-print text-xs px-3 py-1.5 rounded-lg border border-domus-border bg-domus-bg hover:border-sky-500/50 text-sky-300 flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i> Ampliar SVG
+          </button>
+        </div>
+        <div id="mermaid-slot-m1" class="mermaid-container bg-domus-bg/90 border border-domus-border rounded-xl p-4 overflow-x-auto custom-scrollbar min-h-[240px] flex items-center justify-center">
+          <span class="text-xs text-slate-500">Renderizando diagrama...</span>
+        </div>
+      </div>
+
+      <!-- 4 Engineering Traps -->
+      <div class="glass-card rounded-xl p-5">
+        <div class="flex items-center gap-2.5 mb-4">
+          <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-400"></i>
+          <h3 class="text-base font-bold text-white">As 4 Armadilhas de Engenharia (e Como o Projeto as Evita)</h3>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-domus-bg/85 border border-rose-500/25 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-rose-400">Armadilha 01 • Conhecimento &amp; Rotina</span>
+              <span class="text-[11px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-semibold">Solução: RAG + MCP</span>
+            </div>
+            <p class="text-sm font-semibold text-white">Não faça Fine-Tuning contínuo para ensinar a rotina</p>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+              Re-treinar pesos de um LLM toda semana é caro, lento e gera alucinação com dados vencidos (ex: item que acabou na despensa ontem). O modelo base (<code class="mono text-sky-300">Qwen/Llama 14B</code>) permanece congelado e recebe:
+              <strong class="text-slate-200">(a)</strong> memória semântica no <code class="mono text-emerald-300">postgres-domus + pgvector</code> e
+              <strong class="text-slate-200">(b)</strong> ferramentas em tempo real (Tools/MCP) para consultar Despensa, Carteira e sensores na hora da pergunta.
+            </p>
+          </div>
+
+          <div class="bg-domus-bg/85 border border-amber-500/25 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Armadilha 02 • Tráfego &amp; CPU de Áudio</span>
+              <span class="text-[11px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-semibold">Solução: Edge Wake-Word</span>
+            </div>
+            <p class="text-sm font-semibold text-white">Wake-Word ("Cortex") precisa rodar localmente nos Nodes</p>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+              Transmitir streaming de áudio 24/7 de 4 tablets/celulares para o Domus saturaria o Wi-Fi e consumiria o i5-4590 sem necessidade. Cada node Android roda <code class="mono text-sky-300">openWakeWord</code> ou <code class="mono text-sky-300">Sherpa-ONNX</code> em Kotlin/JNI ouvindo apenas o gatilho; só após a wake-word (ou janela <code class="mono">expect_reply</code>) o áudio sobe pelo WebSocket.
+            </p>
+          </div>
+
+          <div class="bg-domus-bg/85 border border-sky-500/25 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-sky-400">Armadilha 03 • Energia vs. Latência</span>
+              <span class="text-[11px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-semibold">Solução: S3 Sleep + WoL</span>
+            </div>
+            <p class="text-sm font-semibold text-white">Suspensão na RAM (S3) em vez de Desligamento Total (S5)</p>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+              Um PC Gamer totalmente desligado (S5) leva 25–45 segundos entre BIOS, SO, driver NVIDIA e carregamento do modelo na VRAM — tempo inaceitável numa conversa. Em <strong class="text-slate-200">Suspensão S3</strong> (~2–5W na tomada), o Wake-on-LAN acorda o Worker em <strong class="text-emerald-300">2–3 segundos</strong>, e um timer de 10 minutos sem uso devolve a máquina ao sono.
+            </p>
+          </div>
+
+          <div class="bg-domus-bg/85 border border-purple-500/25 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-purple-400">Armadilha 04 • Privacidade &amp; Disco</span>
+              <span class="text-[11px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-semibold">Solução: Embeddings em RAM</span>
+            </div>
+            <p class="text-sm font-semibold text-white">Visão computacional na borda sem gravar vídeo em disco</p>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+              As câmeras dos tablets/espelhos não precisam enviar vídeo contínuo nem salvar gravações no SSD de 238 GB. O node extrai detecção facial via ML Kit localmente (<code class="mono">&lt;100ms</code>) e manda apenas eventos JSON (<code class="mono">FACE_PRESENCE</code>). Quando identificação biométrica for necessária, apenas um frame efêmero é vetorizado em RAM e descartado.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- ABA 2: ARQUITETURA INTERNA DO C0RT3X CORE (7 MÓDULOS)               -->
+    <!-- =================================================================== -->
+    <section id="tab-core" class="tab-section hidden space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-domus-border pb-4">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-widest text-purple-400">Seção 02 • O Orquestrador 24/7</span>
+          <h2 class="text-2xl font-bold text-white mt-0.5">Arquitetura Interna do C0rt3x Core (Os 7 Módulos)</h2>
+          <p class="text-sm text-slate-400 mt-1">
+            Serviço Python/FastAPI assíncrono em <code class="mono text-sky-300">/srv/domus/infra/domus/cortex</code> (<code class="mono">mem_limit: 384m</code>) operando dentro da zona privada <code class="mono">domus_internal</code>.
+          </p>
+        </div>
+        <div class="flex items-center gap-2 text-xs bg-domus-card border border-domus-border px-3.5 py-2 rounded-xl mono text-sky-300">
+          <i data-lucide="lock" class="w-4 h-4 text-emerald-400"></i>
+          https://cortex.domus.solobit.com.br (LAN/Tailnet Only)
+        </div>
+      </div>
+
+      <!-- Mermaid Diagram 2: Core Modules & Network Boundaries -->
+      <div class="glass-card rounded-xl p-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="workflow" class="w-5 h-5 text-purple-400"></i>
+              Diagrama 2 — Fluxo Interno dos 7 Módulos &amp; Isolamento "Dois Mundos"
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Como o C0rt3x Core interage com <code class="mono">domus_internal</code>, <code class="mono">domus_db</code>, <code class="mono">notify_bus</code> e consome APIs SoloBit via HTTPS sem violar o isolamento de rede.
+            </p>
+          </div>
+          <button onclick="openDiagramModal('m2', 'Diagrama 2 — Arquitetura Interna do C0rt3x Core')" class="no-print text-xs px-3 py-1.5 rounded-lg border border-domus-border bg-domus-bg hover:border-sky-500/50 text-sky-300 flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i> Ampliar SVG
+          </button>
+        </div>
+        <div id="mermaid-slot-m2" class="mermaid-container bg-domus-bg/90 border border-domus-border rounded-xl p-4 overflow-x-auto custom-scrollbar min-h-[280px] flex items-center justify-center">
+          <span class="text-xs text-slate-500">Renderizando diagrama...</span>
+        </div>
+      </div>
+
+      <!-- Interactive 7 Modules Deep Dive -->
+      <div class="glass-card rounded-xl p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="cpu" class="w-5 h-5 text-sky-400"></i>
+              Detalhamento Técnico dos 7 Módulos do C0rt3x Core
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Clique em um módulo para destacar suas regras, ou veja todos os 7 módulos em sequência.</p>
+          </div>
+          <div class="flex items-center gap-2 no-print">
+            <button onclick="filterModules('all')" id="mod-btn-all" class="module-pill active text-xs px-3 py-1.5 rounded-lg border border-domus-border cursor-pointer">Todos (7)</button>
+          </div>
+        </div>
+
+        <!-- Selector Pills -->
+        <div class="flex flex-wrap gap-2 mb-5 no-print" id="module-selector-bar">
+          <button onclick="filterModules('m-spatial')" data-mod="m-spatial" class="module-pill text-xs px-3 py-1.5 rounded-lg border border-domus-border bg-domus-bg text-slate-300 hover:text-white cursor-pointer">1. Spatial &amp; Presence</button>
+          <button onclick="filterModules('m-session')" data-mod="m-session" class="module-pill text-xs px-3 py-1.5 rounded-lg border border-domus-border bg-domus-bg text-slate-300 hover:text-white cursor-pointer">2. Session &amp; Dialogue</button>
+          <button onclick="filterModules('m-router')" data-mod="m-router" class="module-pill text-xs px-3 py-1.5 rounded-lg border border-domus-border bg-domus-bg text-slate-300 hover:text-white cursor-pointer">3. Cognitive Router</button>
+          <button onclick="filterModules('m-power')" data-mod="m-power" class="module-pill text-xs px-3 py-1.5 rounded-lg border border-domus-border bg-domus-bg text-slate-300 hover:text-white cursor-pointer">4. Slave Power (WoL)</button>
+          <button onclick="filterModules('m-tools')" data-mod="m-tools" class="module-pill text-xs px-3 py-1.5 rounded-lg border border-domus-border bg-domus-bg text-slate-300 hover:text-white cursor-pointer">5. Tool / MCP Registry</button>
+          <button onclick="filterModules('m-memory')" data-mod="m-memory" class="module-pill text-xs px-3 py-1.5 rounded-lg border border-domus-border bg-domus-bg text-slate-300 hover:text-white cursor-pointer">6. Memory Engine</button>
+          <button onclick="filterModules('m-optical')" data-mod="m-optical" class="module-pill text-xs px-3 py-1.5 rounded-lg border border-domus-border bg-domus-bg text-slate-300 hover:text-white cursor-pointer">7. Optical &amp; Proactive</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4" id="modules-grid">
+          <!-- Module 1 -->
+          <article data-mod-card="m-spatial" class="bg-domus-bg/90 border border-domus-border rounded-xl p-4 space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400 font-bold text-sm">01</div>
+                <div>
+                  <h4 class="text-sm font-bold text-white">Spatial &amp; Presence Engine</h4>
+                  <span class="text-[11px] mono text-sky-400">core/spatial_engine.py</span>
+                </div>
+              </div>
+              <span class="text-[11px] px-2 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20">Handoff Follow-Me</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Mantém o grafo topológico da residência (<code class="mono">cozinha</code>, <code class="mono">sala</code>, <code class="mono">banheiro</code>, <code class="mono">quarto</code>, <code class="mono">rua_tailnet</code>) e calcula em tempo real qual node é o melhor ponto de saída para cada morador através de fusão ponderada com decaimento (TTL).
+            </p>
+            <div class="grid grid-cols-2 gap-2 text-[11px]">
+              <div class="bg-domus-card p-2 rounded border border-domus-border">
+                <div class="text-slate-400">Voz SNR Alto</div>
+                <div class="font-bold text-emerald-400 mono">Peso 100 • Imediato</div>
+              </div>
+              <div class="bg-domus-card p-2 rounded border border-domus-border">
+                <div class="text-slate-400">Câmera ML Kit (Node)</div>
+                <div class="font-bold text-sky-400 mono">Peso 80 • TTL 30s</div>
+              </div>
+              <div class="bg-domus-card p-2 rounded border border-domus-border">
+                <div class="text-slate-400">Radar mmWave (ESP32)</div>
+                <div class="font-bold text-amber-400 mono">Peso 50 • TTL 60s</div>
+              </div>
+              <div class="bg-domus-card p-2 rounded border border-domus-border">
+                <div class="text-slate-400">Saída Wi-Fi → Tailnet</div>
+                <div class="font-bold text-purple-400 mono">Roteia para Apprise/Mobile</div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Module 2 -->
+          <article data-mod-card="m-session" class="bg-domus-bg/90 border border-domus-border rounded-xl p-4 space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 font-bold text-sm">02</div>
+                <div>
+                  <h4 class="text-sm font-bold text-white">Session &amp; Dialogue Manager</h4>
+                  <span class="text-[11px] mono text-purple-400">core/session_manager.py</span>
+                </div>
+              </div>
+              <span class="text-[11px] px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20">Sessão por Pessoa</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Diferente da Alexa (onde a conversa morre na caixa de som que ouviu), aqui a chave é <code class="mono text-purple-300">session:will</code>. O áudio pode entrar pelo tablet da cozinha e, 4 segundos depois, a resposta sair no espelho do banheiro sem perder contexto.
+            </p>
+            <div class="bg-domus-card p-2.5 rounded border border-domus-border text-[11px] space-y-1 text-slate-300">
+              <div>• <strong class="text-white">Handoff na Entrega:</strong> Consulta <code class="mono text-sky-300">SpatialEngine.get_best_node("will")</code> no momento exato do dispatch.</div>
+              <div>• <strong class="text-white">Conversa Natural (<code class="mono text-amber-300">expect_reply_seconds: 8</code>):</strong> Quando o C0rt3x faz uma pergunta, o node destino reabre o microfone por 8s após o TTS terminar, dispensando repetir "Cortex".</div>
+            </div>
+          </article>
+
+          <!-- Module 3 -->
+          <article data-mod-card="m-router" class="bg-domus-bg/90 border border-domus-border rounded-xl p-4 space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-sm">03</div>
+                <div>
+                  <h4 class="text-sm font-bold text-white">Cognitive Router (2 Velocidades)</h4>
+                  <span class="text-[11px] mono text-emerald-400">core/cognitive_router.py</span>
+                </div>
+              </div>
+              <span class="text-[11px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">Fast vs. Slow Path</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Decide se o pedido pode ser atendido instantaneamente na CPU do Domus ou se exige raciocínio complexo da GPU do PC Gamer.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+              <div class="bg-emerald-500/5 border border-emerald-500/25 p-2.5 rounded">
+                <div class="font-bold text-emerald-400 mb-1">⚡ Fast-Path (i5-4590 CPU &lt;50ms)</div>
+                <p class="text-slate-300">Comandos determinísticos (luz, ar-condicionado, play/pause, tocar faixa de CD, volume). Não acorda o PC Gamer.</p>
+              </div>
+              <div class="bg-amber-500/5 border border-amber-500/25 p-2.5 rounded">
+                <div class="font-bold text-amber-400 mb-1">🔥 Slow-Path (PC Gamer GPU)</div>
+                <p class="text-slate-300">Receitas cruzando despensa, análise da carteira, perguntas abertas, planejamento de rotina. Aciona WoL e chama Ollama/vLLM.</p>
+              </div>
+            </div>
+          </article>
+
+          <!-- Module 4 -->
+          <article data-mod-card="m-power" class="bg-domus-bg/90 border border-domus-border rounded-xl p-4 space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-sm">04</div>
+                <div>
+                  <h4 class="text-sm font-bold text-white">Slave Power &amp; Compute Orchestrator</h4>
+                  <span class="text-[11px] mono text-amber-400">core/slave_power.py</span>
+                </div>
+              </div>
+              <span class="text-[11px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">Wake-on-LAN S3</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Gerencia o ciclo de energia do PC Gamer Slave com máquina de estados resiliente, feedback sonoro imediato no node enquanto a GPU desperta, e auto-hibernação após ociosidade.
+            </p>
+            <div class="flex flex-wrap items-center gap-1.5 text-[11px] mono bg-domus-card p-2.5 rounded border border-domus-border">
+              <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">SLEEPING_S3</span>
+              <span class="text-slate-500">→</span>
+              <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">WAKING_WOL (2-3s)</span>
+              <span class="text-slate-500">→</span>
+              <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">ONLINE_IDLE</span>
+              <span class="text-slate-500">→</span>
+              <span class="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300">BUSY_INFERENCE</span>
+            </div>
+            <div class="text-[11px] text-slate-400">
+              Idle timeout padrão: <code class="mono text-amber-300">600s</code> (10 min) → <code class="mono text-slate-300">POST http://slave:8090/system/sleep</code>.
+            </div>
+          </article>
+
+          <!-- Module 5 (Full width on large screens for detailed table) -->
+          <article data-mod-card="m-tools" class="lg:col-span-2 bg-domus-bg/90 border border-domus-border rounded-xl p-4 space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-bold text-sm">05</div>
+                <div>
+                  <h4 class="text-sm font-bold text-white">Tool / MCP Registry (As "Mãos" do C0rt3x)</h4>
+                  <span class="text-[11px] mono text-cyan-400">tools/*.py</span>
+                </div>
+              </div>
+              <span class="text-[11px] px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">Zero Acesso Direto ao Banco</span>
+            </div>
+            <p class="text-xs text-slate-300">
+              O LLM nunca toca em bancos SQL diretamente. Ele invoca funções tipadas via Tool Calling, e o <code class="mono">C0rt3x Core</code> executa as chamadas respeitando o isolamento entre os mundos Domus e SoloBit.
+            </p>
+            <div class="overflow-x-auto custom-scrollbar">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="border-b border-domus-border text-slate-400">
+                    <th class="py-2 pr-3 font-medium">Tool (Função)</th>
+                    <th class="py-2 pr-3 font-medium">Alvo / Transporte</th>
+                    <th class="py-2 font-medium">Capacidade Prática</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-domus-border/60 text-slate-300">
+                  <tr>
+                    <td class="py-2 pr-3 mono text-emerald-300">despensa.*</td>
+                    <td class="py-2 pr-3 mono text-[11px] text-slate-400">HTTPS https://despensa.solobit.com.br (Token Serviço)</td>
+                    <td class="py-2">Consultar estoque real, itens perto do vencimento, sugerir receitas e adicionar itens à lista de compras.</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-3 mono text-emerald-300">carteira.*</td>
+                    <td class="py-2 pr-3 mono text-[11px] text-slate-400">HTTPS https://carteira.solobit.com.br (Token Serviço)</td>
+                    <td class="py-2">Consultar gastos do mês por categoria, alertar fechamento de fatura e registrar despesas rápidas por voz.</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-3 mono text-sky-300">home.iot.*</td>
+                    <td class="py-2 pr-3 mono text-[11px] text-slate-400">domus_internal (AirPower, ThingsBoard, Mosquitto/HA)</td>
+                    <td class="py-2">Acender/apagar luzes, ajustar ar-condicionado via ESP32 IR, ler temperatura/umidade e potência elétrica.</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-3 mono text-amber-300">media.*</td>
+                    <td class="py-2 pr-3 mono text-[11px] text-slate-400">domus_internal (Music Assistant, Navidrome, /dev/sr0)</td>
+                    <td class="py-2">Tocar faixa/álbum específico em zona (quarto, sala, todos), pausar, agrupar salas, ler ou ejetar CD/DVD.</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-3 mono text-purple-300">notify.*</td>
+                    <td class="py-2 pr-3 mono text-[11px] text-slate-400">notify_bus (POST http://apprise:8000/notify/apprise)</td>
+                    <td class="py-2">Enviar receitas, alertas ou listas de compras ao Telegram (<code class="mono">tag=admin</code>) ou Zoho HTML quando estiver fora de casa.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <!-- Module 6 -->
+          <article data-mod-card="m-memory" class="bg-domus-bg/90 border border-domus-border rounded-xl p-4 space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-sm">06</div>
+                <div>
+                  <h4 class="text-sm font-bold text-white">Memory Engine (3 Camadas)</h4>
+                  <span class="text-[11px] mono text-indigo-400">core/memory_engine.py</span>
+                </div>
+              </div>
+              <span class="text-[11px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">postgres-domus + pgvector</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Usa o cluster PostgreSQL 15 já rodando na rede interna <code class="mono">domus_db</code> com um database dedicado <code class="mono text-indigo-300">cortex_db</code> e extensão <code class="mono">pgvector</code>.
+            </p>
+            <ul class="space-y-1.5 text-[11px] text-slate-300">
+              <li class="bg-domus-card p-2 rounded border border-domus-border"><strong class="text-sky-300">1. Working Memory (RAM):</strong> Estado imediato de cada cômodo, mídia ativa e últimas 10 falas da sessão.</li>
+              <li class="bg-domus-card p-2 rounded border border-domus-border"><strong class="text-amber-300">2. Episodic Events (SQL):</strong> Linha do tempo estruturada ("12:25 CD Arctic Monkeys inserido", "22:30 Will no quarto").</li>
+              <li class="bg-domus-card p-2 rounded border border-domus-border"><strong class="text-emerald-300">3. Semantic Memories (pgvector):</strong> Fatos e hábitos aprendidos injetados via RAG no System Prompt do Slow-Path.</li>
+            </ul>
+          </article>
+
+          <!-- Module 7 -->
+          <article data-mod-card="m-optical" class="bg-domus-bg/90 border border-domus-border rounded-xl p-4 space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 font-bold text-sm">07</div>
+                <div>
+                  <h4 class="text-sm font-bold text-white">Proactive Engine &amp; Optical Watcher</h4>
+                  <span class="text-[11px] mono text-rose-400">watchers/optical_drive.py</span>
+                </div>
+              </div>
+              <span class="text-[11px] px-2 py-0.5 rounded bg-rose-500/10 text-rose-300 border border-rose-500/20">pyudev + /dev/sr0</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Escuta eventos do kernel Linux sem polling pesado e transforma ações físicas (inserir um CD/DVD, consumo fora de hora, item vencendo) em diálogos proativos estilo Jarvis.
+            </p>
+            <div class="bg-domus-card p-2.5 rounded border border-domus-border text-[11px] space-y-1 text-slate-300">
+              <div>• <strong class="text-white">Gatilho Óptico:</strong> Container monta <code class="mono text-amber-300">devices: ["/dev/sr0:/dev/sr0"]</code> + <code class="mono">pyudev</code>.</div>
+              <div>• <strong class="text-white">Identificação (&lt;2s):</strong> <code class="mono">libdiscid</code> lê a TOC e busca artista/álbum/faixas no MusicBrainz.</div>
+              <div>• <strong class="text-white">Auto-Cache Inteligente:</strong> Enquanto toca a faixa pedida, ripa o CD em FLAC/MP3 em background para o <code class="mono">Navidrome</code>.</div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <!-- Interactive Directory Tree -->
+      <div class="glass-card rounded-xl p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <i data-lucide="folder-tree" class="w-5 h-5 text-amber-400"></i>
+          <h3 class="text-base font-bold text-white">Estrutura Canônica Proposta (<code class="mono text-sky-300">/srv/domus/infra/domus/cortex/</code>)</h3>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div class="lg:col-span-5 bg-domus-bg border border-domus-border rounded-xl p-3 mono text-xs space-y-1 max-h-[340px] overflow-y-auto custom-scrollbar" id="dir-tree">
+            <div class="text-slate-400 px-2 py-1 font-semibold">/srv/domus/infra/domus/cortex/</div>
+            <button onclick="selectTreeItem('compose')" data-tree="compose" class="tree-item active w-full text-left px-3 py-1.5 rounded hover:bg-slate-800/70 flex items-center gap-2 cursor-pointer">
+              <i data-lucide="file-code" class="w-3.5 h-3.5 text-sky-400"></i> compose.yaml
+            </button>
+            <button onclick="selectTreeItem('env')" data-tree="env" class="tree-item w-full text-left px-3 py-1.5 rounded hover:bg-slate-800/70 flex items-center gap-2 cursor-pointer">
+              <i data-lucide="key-round" class="w-3.5 h-3.5 text-amber-400"></i> .env.example
+            </button>
+            <button onclick="selectTreeItem('main')" data-tree="main" class="tree-item w-full text-left px-3 py-1.5 rounded hover:bg-slate-800/70 flex items-center gap-2 cursor-pointer">
+              <i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-400"></i> app/main.py
+            </button>
+            <button onclick="selectTreeItem('spatial')" data-tree="spatial" class="tree-item w-full text-left px-3 py-1.5 rounded hover:bg-slate-800/70 flex items-center gap-2 cursor-pointer">
+              <i data-lucide="map-pin" class="w-3.5 h-3.5 text-sky-400"></i> app/core/spatial_engine.py
+            </button>
+            <button onclick="selectTreeItem('session')" data-tree="session" class="tree-item w-full text-left px-3 py-1.5 rounded hover:bg-slate-800/70 flex items-center gap-2 cursor-pointer">
+              <i data-lucide="messages-square" class="w-3.5 h-3.5 text-purple-400"></i> app/core/session_manager.py
+            </button>
+            <button onclick="selectTreeItem('router')" data-tree="router" class="tree-item w-full text-left px-3 py-1.5 rounded hover:bg-slate-800/70 flex items-center gap-2 cursor-pointer">
+              <i data-lucide="git-branch" class="w-3.5 h-3.5 text-emerald-400"></i> app/core/cognitive_router.py
+            </button>
+            <button onclick="selectTreeItem('power')" data-tree="power" class="tree-item w-full text-left px-3 py-1.5 rounded hover:bg-slate-800/70 flex items-center gap-2 cursor-pointer">
+              <i data-lucide="power" class="w-3.5 h-3.5 text-amber-400"></i> app/core/slave_power.py
+            </button>
+            <button onclick="selectTreeItem('memory')" data-tree="memory" class="tree-item w-full text-left px-3 py-1.5 rounded hover:bg-slate-800/70 flex items-center gap-2 cursor-pointer">
+              <i data-lucide="database" class="w-3.5 h-3.5 text-indigo-400"></i> app/core/memory_engine.py
+            </button>
+            <button onclick="selectTreeItem('optical')" data-tree="optical" class="tree-item w-full text-left px-3 py-1.5 rounded hover:bg-slate-800/70 flex items-center gap-2 cursor-pointer">
+              <i data-lucide="disc-3" class="w-3.5 h-3.5 text-rose-400"></i> app/watchers/optical_drive.py
+            </button>
+            <button onclick="selectTreeItem('tools')" data-tree="tools" class="tree-item w-full text-left px-3 py-1.5 rounded hover:bg-slate-800/70 flex items-center gap-2 cursor-pointer">
+              <i data-lucide="wrench" class="w-3.5 h-3.5 text-cyan-400"></i> app/tools/*.py (despensa, carteira, media, iot, notify)
+            </button>
+          </div>
+          <div class="lg:col-span-7 bg-domus-bg border border-domus-border rounded-xl p-4 flex flex-col justify-between" id="tree-detail-panel">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- ABA 3: SIMULADOR CASO 1 — FOLLOW-ME HANDOFF                         -->
+    <!-- =================================================================== -->
+    <section id="tab-sim-follow" class="tab-section hidden space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-domus-border pb-4">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-widest text-sky-400">Seção 03 • Simulador Interativo (Caso de Uso 1)</span>
+          <h2 class="text-2xl font-bold text-white mt-0.5">Handoff Espacial "Follow-Me": Cozinha ➔ Sala ➔ Banheiro ➔ Rua</h2>
+          <p class="text-sm text-slate-400 mt-1">
+            Avance os passos para observar como a sessão segue o morador (<strong class="text-white">Will</strong>), acorda o PC Gamer sob demanda e muda o node de resposta automaticamente.
+          </p>
+        </div>
+
+        <!-- Simulator Controls -->
+        <div class="flex flex-wrap items-center gap-2 no-print">
+          <button onclick="followPrev()" class="px-3 py-2 rounded-lg border border-domus-border bg-domus-card hover:border-sky-500/50 text-xs font-medium text-slate-200 flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i> Anterior
+          </button>
+          <button onclick="followTogglePlay()" id="follow-play-btn" class="px-3.5 py-2 rounded-lg border border-sky-500/40 bg-sky-500/15 hover:bg-sky-500/25 text-xs font-semibold text-sky-300 flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="play" class="w-4 h-4"></i> Auto-Play
+          </button>
+          <button onclick="followNext()" class="px-3 py-2 rounded-lg border border-domus-border bg-domus-card hover:border-sky-500/50 text-xs font-medium text-slate-200 flex items-center gap-1.5 cursor-pointer">
+            Próximo <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+          <button onclick="followGoTo(0)" class="px-3 py-2 rounded-lg border border-domus-border bg-domus-bg hover:text-white text-xs text-slate-400 cursor-pointer" title="Reiniciar">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step Timeline Pills -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 no-print" id="follow-step-pills"></div>
+
+      <!-- Floorplan + Live Status -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <!-- Left: Logical Floorplan (4 zones + Compute Status) -->
+        <div class="lg:col-span-7 glass-card rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="home" class="w-4 h-4 text-sky-400"></i>
+              Planta Lógica da Residência &amp; Tailnet
+            </h3>
+            <div class="flex items-center gap-3 text-[11px]">
+              <span class="flex items-center gap-1.5 text-sky-300"><span class="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block"></span> Posição de Will</span>
+              <span class="flex items-center gap-1.5 text-emerald-300"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span> Saída Ativa</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="follow-floorplan">
+            <!-- Cozinha -->
+            <div id="zone-cozinha" class="room-card bg-domus-bg border border-domus-border rounded-xl p-3.5">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                  <i data-lucide="utensils" class="w-4 h-4 text-amber-400"></i> Cozinha
+                </span>
+                <span id="badge-cozinha" class="text-[10px] mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">tab-cozinha</span>
+              </div>
+              <div class="text-[11px] text-slate-400">Galaxy Tab S6 Lite (Kiosk Parede)</div>
+              <div id="status-cozinha" class="mt-2 text-xs text-slate-300 min-h-[36px]">Aguardando wake-word local...</div>
+            </div>
+
+            <!-- Sala -->
+            <div id="zone-sala" class="room-card bg-domus-bg border border-domus-border rounded-xl p-3.5">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                  <i data-lucide="tv" class="w-4 h-4 text-sky-400"></i> Sala de Estar
+                </span>
+                <span id="badge-sala" class="text-[10px] mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">tv-sala + mmWave</span>
+              </div>
+              <div class="text-[11px] text-slate-400">Domus TV (Android TV) + Radar ESP32</div>
+              <div id="status-sala" class="mt-2 text-xs text-slate-300 min-h-[36px]">Zona de passagem monitorada</div>
+            </div>
+
+            <!-- Banheiro -->
+            <div id="zone-banheiro" class="room-card bg-domus-bg border border-domus-border rounded-xl p-3.5">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                  <i data-lucide="sparkles" class="w-4 h-4 text-purple-400"></i> Banheiro (Espelho)
+                </span>
+                <span id="badge-banheiro" class="text-[10px] mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">kiosk-banheiro</span>
+              </div>
+              <div class="text-[11px] text-slate-400">Celular Kiosk + Alexa BT + Luz Smart</div>
+              <div id="status-banheiro" class="mt-2 text-xs text-slate-300 min-h-[36px]">Câmera ML Kit em standby</div>
+            </div>
+
+            <!-- Rua / Tailnet -->
+            <div id="zone-rua_tailnet" class="room-card bg-domus-bg border border-domus-border rounded-xl p-3.5">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                  <i data-lucide="smartphone" class="w-4 h-4 text-emerald-400"></i> Rua / Externa (Tailnet)
+                </span>
+                <span id="badge-rua_tailnet" class="text-[10px] mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">domus-mobile + Apprise</span>
+              </div>
+              <div class="text-[11px] text-slate-400">VPN Tailscale 100.x + Telegram/E-mail</div>
+              <div id="status-rua_tailnet" class="mt-2 text-xs text-slate-300 min-h-[36px]">Conectado ao Wi-Fi doméstico</div>
+            </div>
+          </div>
+
+          <!-- PC Gamer Slave & Core State Strip -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-domus-border text-xs">
+            <div class="bg-domus-bg/90 border border-domus-border rounded-lg p-2.5">
+              <div class="text-[11px] text-slate-400">Sessão Ativa</div>
+              <div id="follow-session-state" class="font-bold text-sky-300 mono mt-0.5">IDLE</div>
+            </div>
+            <div class="bg-domus-bg/90 border border-domus-border rounded-lg p-2.5">
+              <div class="text-[11px] text-slate-400">PC Gamer Slave (GPU)</div>
+              <div id="follow-slave-state" class="font-bold text-amber-300 mono mt-0.5">SLEEPING_S3 (~3W)</div>
+            </div>
+            <div class="bg-domus-bg/90 border border-domus-border rounded-lg p-2.5">
+              <div class="text-[11px] text-slate-400">Canal de Saída Selecionado</div>
+              <div id="follow-output-node" class="font-bold text-emerald-300 mono mt-0.5">tab-cozinha</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Narration + Spatial Score Table + WS Payload -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="glass-card rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span id="follow-step-badge" class="text-xs font-bold uppercase tracking-wider text-sky-400">Passo 1 / 6</span>
+              <span id="follow-step-time" class="text-xs mono text-slate-400">t = 00s</span>
+            </div>
+            <h4 id="follow-step-title" class="text-base font-bold text-white"></h4>
+            <p id="follow-step-desc" class="text-xs text-slate-300 mt-1.5 leading-relaxed"></p>
+            <div id="follow-speech-box" class="mt-3 p-3 rounded-lg bg-sky-500/10 border border-sky-500/30 text-xs text-sky-100"></div>
+          </div>
+
+          <!-- Spatial Engine Score Table -->
+          <div class="glass-card rounded-xl p-4">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5 flex items-center gap-1.5">
+              <i data-lucide="bar-chart-3" class="w-4 h-4 text-purple-400"></i>
+              Pontuação do Spatial Engine (TTL ao Vivo)
+            </h4>
+            <div class="space-y-2 text-xs" id="follow-score-bars"></div>
+          </div>
+
+          <!-- Live WebSocket / HTTP Payload -->
+          <div class="glass-card rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                <i data-lucide="terminal" class="w-4 h-4"></i> Frame WebSocket / Evento Core
+              </span>
+              <span id="follow-direction-tag" class="text-[10px] mono px-2 py-0.5 rounded bg-slate-800 text-slate-300"></span>
+            </div>
+            <pre id="follow-json-box" class="mono text-[11px] bg-domus-bg border border-domus-border rounded-lg p-3 overflow-x-auto custom-scrollbar text-sky-200 leading-relaxed"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mermaid Diagram 3: Follow-Me Sequence -->
+      <div class="glass-card rounded-xl p-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="arrow-left-right" class="w-5 h-5 text-emerald-400"></i>
+              Diagrama 3 — Sequência Temporal do Handoff Espacial ("Follow-Me")
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Troca transparente do canal de resposta durante a execução da inferência no PC Gamer e saída posterior pela Tailnet.
+            </p>
+          </div>
+          <button onclick="openDiagramModal('m3', 'Diagrama 3 — Sequência Temporal do Handoff Espacial')" class="no-print text-xs px-3 py-1.5 rounded-lg border border-domus-border bg-domus-bg hover:border-sky-500/50 text-sky-300 flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i> Ampliar SVG
+          </button>
+        </div>
+        <div id="mermaid-slot-m3" class="mermaid-container bg-domus-bg/90 border border-domus-border rounded-xl p-4 overflow-x-auto custom-scrollbar min-h-[260px] flex items-center justify-center">
+          <span class="text-xs text-slate-500">Renderizando diagrama...</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- ABA 4: SIMULADOR CASO 2 — CD /dev/sr0 & MULTI-ROOM                  -->
+    <!-- =================================================================== -->
+    <section id="tab-sim-cd" class="tab-section hidden space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-domus-border pb-4">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-widest text-amber-400">Seção 04 • Simulador Interativo (Caso de Uso 2)</span>
+          <h2 class="text-2xl font-bold text-white mt-0.5">Leitor Físico CD/DVD (<code class="mono text-amber-300">/dev/sr0</code>) &amp; Áudio Multi-Room</h2>
+          <p class="text-sm text-slate-400 mt-1">
+            Fluxo ponta a ponta: inserção de CD físico no Domus Server → detecção do morador → confirmação sem wake-word → "Fireside" no quarto + ripping FLAC.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 no-print">
+          <button onclick="cdPrev()" class="px-3 py-2 rounded-lg border border-domus-border bg-domus-card hover:border-amber-500/50 text-xs font-medium text-slate-200 flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i> Anterior
+          </button>
+          <button onclick="cdTogglePlay()" id="cd-play-btn" class="px-3.5 py-2 rounded-lg border border-amber-500/40 bg-amber-500/15 hover:bg-amber-500/25 text-xs font-semibold text-amber-300 flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="play" class="w-4 h-4"></i> Auto-Play
+          </button>
+          <button onclick="cdNext()" class="px-3 py-2 rounded-lg border border-domus-border bg-domus-card hover:border-amber-500/50 text-xs font-medium text-slate-200 flex items-center gap-1.5 cursor-pointer">
+            Próximo <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+          <button onclick="cdGoTo(0)" class="px-3 py-2 rounded-lg border border-domus-border bg-domus-bg hover:text-white text-xs text-slate-400 cursor-pointer" title="Reiniciar">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 no-print" id="cd-step-pills"></div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <!-- Left: Physical Hardware Pipeline & Tracklist -->
+        <div class="lg:col-span-7 glass-card rounded-xl p-5 space-y-4">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i data-lucide="disc-3" class="w-4 h-4 text-amber-400"></i>
+            Pipeline Óptico &amp; Roteamento de Áudio Multi-Ambiente
+          </h3>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="cd-stages-grid">
+            <div id="cd-card-drive" class="bg-domus-bg border border-domus-border rounded-xl p-3.5">
+              <div class="text-xs font-bold text-amber-400 flex items-center gap-1.5 mb-1">
+                <i data-lucide="hard-drive" class="w-4 h-4"></i> Drive /dev/sr0
+              </div>
+              <div class="text-[11px] mono text-slate-400">PLDS DVD+/-RW DS-8ABSH</div>
+              <div id="cd-drive-status" class="mt-2 text-xs text-slate-300">Gaveta fechada com mídia</div>
+            </div>
+
+            <div id="cd-card-brain" class="bg-domus-bg border border-domus-border rounded-xl p-3.5">
+              <div class="text-xs font-bold text-sky-400 flex items-center gap-1.5 mb-1">
+                <i data-lucide="cpu" class="w-4 h-4"></i> C0rt3x Core + STT/TTS
+              </div>
+              <div class="text-[11px] mono text-slate-400">pyudev + libdiscid + Piper</div>
+              <div id="cd-brain-status" class="mt-2 text-xs text-slate-300">Aguardando evento udev</div>
+            </div>
+
+            <div id="cd-card-audio" class="bg-domus-bg border border-domus-border rounded-xl p-3.5">
+              <div class="text-xs font-bold text-emerald-400 flex items-center gap-1.5 mb-1">
+                <i data-lucide="speaker" class="w-4 h-4"></i> Music Assistant
+              </div>
+              <div class="text-[11px] mono text-slate-400">Snapcast + Navidrome FLAC</div>
+              <div id="cd-audio-status" class="mt-2 text-xs text-slate-300">Zona Quarto em standby</div>
+            </div>
+          </div>
+
+          <!-- Album Metadata & Tracklist Match -->
+          <div class="bg-domus-bg border border-domus-border rounded-xl p-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-amber-400 font-black text-sm">AM</div>
+                <div>
+                  <div class="text-sm font-bold text-white">Arctic Monkeys — AM (2013)</div>
+                  <div class="text-[11px] mono text-slate-400">MusicBrainz Release • 12 faixas • TOC DiscID</div>
+                </div>
+              </div>
+              <span id="cd-rip-badge" class="text-[11px] mono px-2.5 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                Cache FLAC: Inativo
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-[11px] mono" id="cd-tracklist">
+              <div class="px-2.5 py-1.5 rounded bg-domus-card text-slate-400 border border-domus-border/60">01. Do I Wanna Know?</div>
+              <div class="px-2.5 py-1.5 rounded bg-domus-card text-slate-400 border border-domus-border/60">02. R U Mine?</div>
+              <div class="px-2.5 py-1.5 rounded bg-domus-card text-slate-400 border border-domus-border/60">05. I Want It All</div>
+              <div class="px-2.5 py-1.5 rounded bg-domus-card text-slate-400 border border-domus-border/60">06. No. 1 Party Anthem</div>
+              <div id="cd-track-09" class="px-2.5 py-1.5 rounded bg-domus-card text-slate-300 border border-domus-border/60 transition-all">09. Fireside (4:12)</div>
+              <div class="px-2.5 py-1.5 rounded bg-domus-card text-slate-400 border border-domus-border/60">12. I Wanna Be Yours</div>
+            </div>
+          </div>
+
+          <!-- Audio Zones Status -->
+          <div class="grid grid-cols-3 gap-2.5 text-xs">
+            <div class="bg-domus-bg border border-domus-border rounded-lg p-2.5 flex items-center justify-between">
+              <span class="text-slate-300">Cozinha (Tab)</span>
+              <span class="mono text-[10px] text-slate-500">IDLE</span>
+            </div>
+            <div class="bg-domus-bg border border-domus-border rounded-lg p-2.5 flex items-center justify-between">
+              <span class="text-slate-300">Sala (TV/Alexa)</span>
+              <span class="mono text-[10px] text-slate-500">IDLE</span>
+            </div>
+            <div id="cd-zone-quarto" class="bg-domus-bg border border-domus-border rounded-lg p-2.5 flex items-center justify-between transition-all">
+              <span class="text-slate-200 font-semibold">Quarto</span>
+              <span id="cd-zone-quarto-badge" class="mono text-[10px] text-slate-400">STANDBY</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Dialogue & Logs -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="glass-card rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span id="cd-step-badge" class="text-xs font-bold uppercase tracking-wider text-amber-400">Passo 1 / 6</span>
+              <span id="cd-step-time" class="text-xs mono text-slate-400">t = 0.0s</span>
+            </div>
+            <h4 id="cd-step-title" class="text-base font-bold text-white"></h4>
+            <p id="cd-step-desc" class="text-xs text-slate-300 mt-1.5 leading-relaxed"></p>
+            <div id="cd-dialogue-box" class="mt-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-100"></div>
+          </div>
+
+          <div class="glass-card rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
+                <i data-lucide="terminal" class="w-4 h-4"></i> Evento / Comando Dispatch
+              </span>
+              <span id="cd-step-component" class="text-[10px] mono px-2 py-0.5 rounded bg-slate-800 text-slate-300"></span>
+            </div>
+            <pre id="cd-json-box" class="mono text-[11px] bg-domus-bg border border-domus-border rounded-lg p-3 overflow-x-auto custom-scrollbar text-amber-100 leading-relaxed"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mermaid Diagram 4: CD/DVD Sequence -->
+      <div class="glass-card rounded-xl p-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="music" class="w-5 h-5 text-amber-400"></i>
+              Diagrama 4 — Sequência do Leitor Físico (<code class="mono">/dev/sr0</code>) ao Áudio Multi-Room
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Do evento <code class="mono">udev</code> no hardware do servidor até a resposta sem wake-word e streaming sincronizado no quarto.
+            </p>
+          </div>
+          <button onclick="openDiagramModal('m4', 'Diagrama 4 — Sequência CD/DVD ao Multi-Room')" class="no-print text-xs px-3 py-1.5 rounded-lg border border-domus-border bg-domus-bg hover:border-sky-500/50 text-sky-300 flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i> Ampliar SVG
+          </button>
+        </div>
+        <div id="mermaid-slot-m4" class="mermaid-container bg-domus-bg/90 border border-domus-border rounded-xl p-4 overflow-x-auto custom-scrollbar min-h-[260px] flex items-center justify-center">
+          <span class="text-xs text-slate-500">Renderizando diagrama...</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- ABA 5: CONTRATO WEBSOCKET v2, RAM, ENERGIA & ROADMAP                -->
+    <!-- =================================================================== -->
+    <section id="tab-contracts" class="tab-section hidden space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-domus-border pb-4">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-widest text-emerald-400">Seção 05 • Contratos, Recursos &amp; Plano de Execução</span>
+          <h2 class="text-2xl font-bold text-white mt-0.5">Protocolo WebSocket v2, Orçamento Real de RAM e Roadmap</h2>
+          <p class="text-sm text-slate-400 mt-1">
+            Evolução compatível sobre o <code class="mono text-sky-300">DomusWebSocketChannel</code> já implementado no SDK Android + dados reais coletados via <code class="mono">docker stats</code>.
+          </p>
+        </div>
+      </div>
+
+      <!-- WebSocket v2 Side-by-Side Payload Comparator -->
+      <div class="glass-card rounded-xl p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="braces" class="w-5 h-5 text-sky-400"></i>
+              Contrato WebSocket v2 (<code class="mono text-sky-300">/api/nodes/{node_id}/channel</code>)
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">4 novos eventos de subida (Android ➔ Core) e 4 novas actions de descida (Core ➔ Android).</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <!-- Uplink -->
+          <div class="bg-domus-bg border border-domus-border rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
+                <i data-lucide="arrow-up-circle" class="w-4 h-4"></i> Subida: Node (Android) ➔ C0rt3x Core
+              </span>
+              <button onclick="copyJson('ws-up-pre', this)" class="no-print text-[11px] px-2 py-1 rounded bg-domus-card border border-domus-border hover:border-sky-500/50 text-slate-300 cursor-pointer">Copiar JSON</button>
+            </div>
+            <div class="flex flex-wrap gap-1.5 no-print" id="ws-up-buttons">
+              <button onclick="selectWsUp('PRESENCE_DETECTED')" data-ws-up="PRESENCE_DETECTED" class="ws-up-btn text-[11px] mono px-2.5 py-1 rounded border border-sky-500/50 bg-sky-500/15 text-sky-300 cursor-pointer">PRESENCE_DETECTED</button>
+              <button onclick="selectWsUp('WAKE_WORD_DETECTED')" data-ws-up="WAKE_WORD_DETECTED" class="ws-up-btn text-[11px] mono px-2.5 py-1 rounded border border-domus-border bg-domus-card text-slate-300 cursor-pointer">WAKE_WORD_DETECTED</button>
+              <button onclick="selectWsUp('VOICE_COMMAND_AUDIO')" data-ws-up="VOICE_COMMAND_AUDIO" class="ws-up-btn text-[11px] mono px-2.5 py-1 rounded border border-domus-border bg-domus-card text-slate-300 cursor-pointer">VOICE_COMMAND_AUDIO</button>
+              <button onclick="selectWsUp('LOCATION_STATE_CHANGED')" data-ws-up="LOCATION_STATE_CHANGED" class="ws-up-btn text-[11px] mono px-2.5 py-1 rounded border border-domus-border bg-domus-card text-slate-300 cursor-pointer">LOCATION_STATE_CHANGED</button>
+            </div>
+            <pre id="ws-up-pre" class="mono text-[11px] bg-domus-card border border-domus-border rounded-lg p-3 overflow-x-auto custom-scrollbar text-sky-200 leading-relaxed min-h-[210px]"></pre>
+          </div>
+
+          <!-- Downlink -->
+          <div class="bg-domus-bg border border-domus-border rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                <i data-lucide="arrow-down-circle" class="w-4 h-4"></i> Descida: C0rt3x Core ➔ Node (Android)
+              </span>
+              <button onclick="copyJson('ws-down-pre', this)" class="no-print text-[11px] px-2 py-1 rounded bg-domus-card border border-domus-border hover:border-emerald-500/50 text-slate-300 cursor-pointer">Copiar JSON</button>
+            </div>
+            <div class="flex flex-wrap gap-1.5 no-print" id="ws-down-buttons">
+              <button onclick="selectWsDown('CORTEX_SPEAK')" data-ws-down="CORTEX_SPEAK" class="ws-down-btn text-[11px] mono px-2.5 py-1 rounded border border-emerald-500/50 bg-emerald-500/15 text-emerald-300 cursor-pointer">CORTEX_SPEAK</button>
+              <button onclick="selectWsDown('CORTEX_LISTEN_NOW')" data-ws-down="CORTEX_LISTEN_NOW" class="ws-down-btn text-[11px] mono px-2.5 py-1 rounded border border-domus-border bg-domus-card text-slate-300 cursor-pointer">CORTEX_LISTEN_NOW</button>
+              <button onclick="selectWsDown('CORTEX_HANDOFF_IN')" data-ws-down="CORTEX_HANDOFF_IN" class="ws-down-btn text-[11px] mono px-2.5 py-1 rounded border border-domus-border bg-domus-card text-slate-300 cursor-pointer">CORTEX_HANDOFF_IN</button>
+              <button onclick="selectWsDown('MEDIA_PLAY_STREAM')" data-ws-down="MEDIA_PLAY_STREAM" class="ws-down-btn text-[11px] mono px-2.5 py-1 rounded border border-domus-border bg-domus-card text-slate-300 cursor-pointer">MEDIA_PLAY_STREAM</button>
+            </div>
+            <pre id="ws-down-pre" class="mono text-[11px] bg-domus-card border border-domus-border rounded-lg p-3 overflow-x-auto custom-scrollbar text-emerald-200 leading-relaxed min-h-[210px]"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row (RAM Budget + Power/Latency) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="memory-stick" class="w-5 h-5 text-emerald-400"></i>
+                Orçamento de RAM do Domus (7.2 GiB = 7.372 MiB)
+              </h3>
+              <p class="text-xs text-slate-400">Medição real dos 19 containers ativos + reserva planejada do C0rt3x Core e Mídia.</p>
+            </div>
+          </div>
+          <div class="h-[290px] relative">
+            <canvas id="ramBudgetChart"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="zap" class="w-5 h-5 text-amber-400"></i>
+                Consumo Energético Médio vs. Latência de Wake
+              </h3>
+              <p class="text-xs text-slate-400">Comparação entre Master/Slave com S3 Sleep vs. GPU ligada 24h vs. Boot frio S5.</p>
+            </div>
+          </div>
+          <div class="h-[290px] relative">
+            <canvas id="powerLatencyChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Implementation Roadmap -->
+      <div class="glass-card rounded-xl p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <i data-lucide="milestone" class="w-5 h-5 text-purple-400"></i>
+          <h3 class="text-base font-bold text-white">Roadmap de Implementação Incremental (4 Fases)</h3>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-domus-bg border border-sky-500/30 rounded-xl p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-sky-400">FASE 1 • Fundação Core</span>
+              <span class="text-[10px] mono px-2 py-0.5 rounded bg-sky-500/15 text-sky-300">MVP</span>
+            </div>
+            <h4 class="text-sm font-bold text-white">C0rt3x Core + WoL + Tools</h4>
+            <ul class="text-xs text-slate-300 space-y-1.5">
+              <li>• Subir stack <code class="mono">cortex_core</code> (<code class="mono">384m</code>) em <code class="mono">domus_internal</code>.</li>
+              <li>• Banco <code class="mono">cortex_db</code> no <code class="mono">postgres-domus</code> + <code class="mono">pgvector</code>.</li>
+              <li>• Integrar Wake-on-LAN S3 com Ollama no PC Gamer.</li>
+              <li>• Conectar Tools <code class="mono">despensa</code>, <code class="mono">carteira</code> e <code class="mono">apprise</code>.</li>
+            </ul>
+          </div>
+
+          <div class="bg-domus-bg border border-amber-500/30 rounded-xl p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-amber-400">FASE 2 • Óptico &amp; Áudio</span>
+              <span class="text-[10px] mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-300">/dev/sr0</span>
+            </div>
+            <h4 class="text-sm font-bold text-white">CD/DVD + Music Assistant</h4>
+            <ul class="text-xs text-slate-300 space-y-1.5">
+              <li>• Subir <code class="mono">Navidrome</code> (64m) + <code class="mono">Music Assistant</code> (256m).</li>
+              <li>• Watcher <code class="mono">pyudev</code> em <code class="mono">/dev/sr0</code> + MusicBrainz DiscID.</li>
+              <li>• Pergunta proativa + resposta <code class="mono">expect_reply</code>.</li>
+              <li>• Auto-ripping silencioso em FLAC para o Navidrome.</li>
+            </ul>
+          </div>
+
+          <div class="bg-domus-bg border border-purple-500/30 rounded-xl p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-purple-400">FASE 3 • Borda Android</span>
+              <span class="text-[10px] mono px-2 py-0.5 rounded bg-purple-500/15 text-purple-300">SDK v2</span>
+            </div>
+            <h4 class="text-sm font-bold text-white">Wake-Word &amp; Handoff Follow-Me</h4>
+            <ul class="text-xs text-slate-300 space-y-1.5">
+              <li>• Adicionar eventos v2 no <code class="mono">domus-node-sdk</code>.</li>
+              <li>• Wake-word local (<code class="mono">openWakeWord</code>/<code class="mono">Sherpa</code>) nos kiosks.</li>
+              <li>• Detecção facial ML Kit na borda (sem gravar vídeo).</li>
+              <li>• Handoff cozinha → banheiro → rua via Tailnet.</li>
+            </ul>
+          </div>
+
+          <div class="bg-domus-bg border border-emerald-500/30 rounded-xl p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-emerald-400">FASE 4 • Always-On</span>
+              <span class="text-[10px] mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300">Autonomia</span>
+            </div>
+            <h4 class="text-sm font-bold text-white">Rotinas Autônomas &amp; Radar</h4>
+            <ul class="text-xs text-slate-300 space-y-1.5">
+              <li>• Sensores ESP32 mmWave (<code class="mono">LD2410</code>) via Mosquitto/HA.</li>
+              <li>• Controle local de AC/Luzes sem depender de nuvem.</li>
+              <li>• Aprendizado contínuo de hábitos na memória vetorial.</li>
+              <li>• Modo Always-On quando hardware dedicado permitir.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-domus-border bg-domus-card/60 py-4 px-4 sm:px-6 text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div>
+        Domus Server • Arquitetura C0rt3x &amp; C0rt3x Core • Arquivo canônico em <code class="mono text-sky-400">/srv/domus/infra/domus/cortex/cortex-architecture.html</code>
+      </div>
+      <div class="mono text-[11px] text-slate-500">
+        Zero Port-Forwarding • Isolamento Dois Mundos Preservado
+      </div>
+    </div>
+  </footer>
+
+  <!-- DIAGRAM ZOOM MODAL -->
+  <div id="diagram-modal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-sm p-4 sm:p-8 flex items-center justify-center">
+    <div class="bg-domus-card border border-domus-border rounded-2xl max-w-6xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="px-5 py-3.5 border-b border-domus-border flex items-center justify-between">
+        <h3 id="modal-title" class="text-sm sm:text-base font-bold text-white">Diagrama</h3>
+        <button onclick="closeDiagramModal()" class="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div id="modal-body" class="p-6 overflow-auto custom-scrollbar bg-domus-bg flex-1 flex items-center justify-center"></div>
+    </div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- JAVASCRIPT ENGINE                                                   -->
+  <!-- =================================================================== -->
+  <script>
+    // -------------------------------------------------------------------------
+    // 1. MERMAID DEFINITIONS & SAFE TAB RENDERING
+    // -------------------------------------------------------------------------
+    const MERMAID_DEFS = {
+      m1: `flowchart TB
+  subgraph EDGE["1. C0rt3x Edge - Sentidos nos Comodos e Rua"]
+    direction LR
+    Tab["Tablet Cozinha - Wake-Word, Camera, HUD"]
+    Bath["Celular Banheiro - ML Kit Face, Alexa BT"]
+    TV["Domus TV Sala - HUD, Audio, Media"]
+    Mob["Domus Mobile Rua - Tailnet, Push"]
+    ESP["Sensores ESP32 - mmWave, IR AC"]
+    DVD["Drive Fisico /dev/sr0 - PLDS DVD-RW"]
+  end
+
+  subgraph CORE["2. C0rt3x Core - Domus Server i5-4590 24/7"]
+    WS["Gateway WebSocket e Eventos"]
+    Spatial["Spatial e Presence Engine - Follow-Me"]
+    Session["Session e Dialogue Manager - Por Morador"]
+    Router["Cognitive Router - Fast CPU vs Slow GPU"]
+    Power["Slave Power Manager - WoL S3 e Auto-Sleep"]
+    Tools["Tool / MCP Registry - Despensa, Carteira, IoT, Media, Apprise"]
+    DB[("postgres-domus - cortex_db + pgvector")]
+  end
+
+  subgraph COMPUTE["3. C0rt3x Compute - PC Gamer Slave Sob Demanda"]
+    direction LR
+    WoL["Wake-on-LAN S3 - Acorda em 2-3s"]
+    STT["Faster-Whisper - STT + Speaker ID"]
+    LLM["Ollama / vLLM - Qwen/Llama 14B + Tools"]
+    TTS["Piper / Kokoro - Voz Neural PT-BR"]
+  end
+
+  Tab <-->|"WebSocket menor que 15ms"| WS
+  Bath <-->|"WebSocket menor que 15ms"| WS
+  TV <-->|"WebSocket menor que 15ms"| WS
+  Mob <-->|"Tailnet WSS"| WS
+  ESP -->|"MQTT / HTTP"| WS
+  DVD -->|"udev ID_CDROM_MEDIA=1"| WS
+  WS --> Spatial
+  WS --> Session
+  Spatial <--> Session
+  Session --> Router
+  Router <-->|"Memoria e Rotinas"| DB
+  Router -->|"Fast-Path menor que 50ms"| Tools
+  Router -->|"Slow-Path GPU"| Power
+  Power -.->|"Magic Packet UDP:9"| WoL
+  WoL --> LLM
+  Router <-->|"HTTP / gRPC LAN"| STT
+  Router <-->|"Inferencia e Tools"| LLM
+  Router <-->|"Sintese de Audio"| TTS
+  LLM <-->|"Executa Acoes"| Tools`,
+
+      m2: `flowchart LR
+  subgraph EDGE["Nodes e Drive Fisico"]
+    Nodes["Nodes Android - domus-node-sdk"]
+    Sr0["/dev/sr0 - CD/DVD"]
+  end
+
+  subgraph DOMUS_NET["Rede Docker: domus_internal - Isolada"]
+    subgraph CORTEX["Container cortex_core - mem_limit 384m"]
+      GW["WebSocket Gateway"]
+      Optical["Optical Watcher - pyudev + libdiscid"]
+      Spatial["Spatial Engine"]
+      Sess["Session Manager"]
+      Router["Cognitive Router"]
+      Power["Slave Power Mgr"]
+      Tools["Tool Registry"]
+    end
+    Air["AirPower / ThingsBoard / HA"]
+    Media["Music Assistant + Navidrome"]
+  end
+
+  subgraph DB_NET["Rede Docker: domus_db - internal"]
+    PG[("postgres-domus - cortex_db + pgvector")]
+  end
+
+  subgraph NOTIFY_NET["Rede Docker: notify_bus - internal"]
+    Apprise["Apprise Hub :8000 - Telegram / Zoho"]
+  end
+
+  subgraph SLAVE_LAN["PC Gamer Slave - LAN"]
+    Worker["Ollama + Whisper + Piper"]
+  end
+
+  subgraph SOLOBIT_EXT["Mundo SoloBit - Acesso via HTTPS"]
+    Desp["despensa.solobit.com.br"]
+    Cart["carteira.solobit.com.br"]
+  end
+
+  Nodes <-->|"WSS menor que 15ms"| GW
+  Sr0 -->|"udev"| Optical
+  Optical --> Sess
+  GW --> Spatial
+  GW --> Sess
+  Spatial <--> Sess
+  Sess --> Router
+  Router <-->|"Embeddings e Logs"| PG
+  Router -->|"Fast-Path"| Tools
+  Router -->|"Slow-Path"| Power
+  Power -.->|"WoL + HTTP LAN"| Worker
+  Tools -->|"IoT"| Air
+  Tools -->|"Multi-Room"| Media
+  Tools -->|"Notificacao Rua"| Apprise
+  Tools -->|"HTTPS Autenticado"| Desp
+  Tools -->|"HTTPS Autenticado"| Cart`,
+
+      m3: `sequenceDiagram
+  autonumber
+  actor Will
+  participant Coz as Tab Cozinha
+  participant Core as C0rt3x Core (Domus)
+  participant Slave as PC Gamer Slave (GPU)
+  participant Ban as Kiosk Banheiro
+  participant Rua as Apprise / Tailnet
+
+  Will->>Coz: "Cortex, o que tem na despensa pro jantar?"
+  Coz->>Core: WS WAKE_WORD + VOICE_COMMAND_AUDIO
+  Note over Core: Abre session:will (origin = tab-cozinha)
+  Core->>Slave: Envia Magic Packet WoL (S3 -> Wake em 2.5s)
+  Core-->>Coz: PLAY_SOUND ("thinking chime")
+  Will-->>Ban: Caminha pela sala e para diante do espelho
+  Ban->>Core: WS PRESENCE_DETECTED (FACE_PRESENCE, peso 80)
+  Note over Core: SpatialEngine muda active_output_node -> kiosk-banheiro
+  Slave->>Core: Whisper STT + LLM + Tool despensa.get_inventory
+  Core->>Ban: WS CORTEX_HANDOFF_IN + CORTEX_SPEAK (TTS + expect_reply: 8s)
+  Ban-->>Will: Responde na Alexa/Espelho com receita sugerida
+  Note over Will,Rua: Mais tarde, Will sai de casa (saiu do Wi-Fi DOMUS-LAN-5G)
+  Rua->>Core: WS LOCATION_STATE_CHANGED (zona = rua_tailnet)
+  Core->>Rua: POST Apprise (Telegram tag=admin): Lista de compras`,
+
+      m4: `sequenceDiagram
+  autonumber
+  actor Will
+  participant Drive as Drive /dev/sr0 (Domus)
+  participant Core as C0rt3x Core
+  participant Node as Node Proximo (Voz/Camera)
+  participant Slave as Whisper + Piper (Slave/Local)
+  participant Audio as Music Assistant / Navidrome
+
+  Will->>Drive: Insere CD fisico na gaveta
+  Drive->>Core: Evento udev (ID_CDROM_MEDIA=1)
+  Core->>Drive: libdiscid le TOC + consulta MusicBrainz
+  Note over Core: Identifica: Arctic Monkeys - AM (Faixa 09 = Fireside)
+  Core->>Core: SpatialEngine localiza morador ativo (Will)
+  Core->>Slave: Gera TTS: "Will, um CD de Arctic Monkeys foi inserido..."
+  Core->>Node: WS CORTEX_SPEAK (expect_reply_seconds = 8)
+  Node-->>Will: Reproduz pergunta e abre microfone automaticamente
+  Will->>Node: "Sim, desejo, reproduza Fireside no quarto"
+  Node->>Core: WS VOICE_COMMAND_AUDIO
+  Core->>Slave: Transcricao STT -> "reproduza Fireside no quarto"
+  Core->>Audio: MediaTool resolve faixa 09 + zona "quarto"
+  Core->>Node: WS CORTEX_SPEAK ("Certo, tocando no quarto.")
+  Audio-->>Will: Reproduz Fireside no Quarto + ripa CD em FLAC em background`
+    };
+
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'dark',
+      securityLevel: 'loose',
+      themeVariables: {
+        darkMode: true,
+        background: '#0b0f19',
+        primaryColor: '#1e293b',
+        primaryTextColor: '#f3f4f6',
+        primaryBorderColor: '#38bdf8',
+        lineColor: '#64748b',
+        secondaryColor: '#111827',
+        tertiaryColor: '#1f293d',
+        actorBkg: '#111827',
+        actorBorder: '#38bdf8',
+        actorTextColor: '#f3f4f6',
+        signalColor: '#38bdf8',
+        signalTextColor: '#e2e8f0',
+        noteBkgColor: '#1e293b',
+        noteTextColor: '#fde68a',
+        noteBorderColor: '#f59e0b'
+      },
+      flowchart: { useMaxWidth: true, htmlLabels: false, curve: 'basis' },
+      sequence: { useMaxWidth: true, showSequenceNumbers: true, mirrorActors: false }
+    });
+
+    const renderedDiagrams = new Set();
+
+    async function renderVisibleMermaidDiagrams() {
+      for (const id of Object.keys(MERMAID_DEFS)) {
+        const slot = document.getElementById(`mermaid-slot-${id}`);
+        if (!slot) continue;
+        const section = slot.closest('.tab-section');
+        if (section && section.classList.contains('hidden')) continue;
+        if (renderedDiagrams.has(id) && slot.querySelector('svg')) continue;
+
+        try {
+          const uniqueSvgId = `mermaid-svg-${id}-${Date.now()}`;
+          const { svg } = await mermaid.render(uniqueSvgId, MERMAID_DEFS[id]);
+          slot.innerHTML = svg;
+          renderedDiagrams.add(id);
+        } catch (err) {
+          console.error(`Erro ao renderizar diagrama ${id}:`, err);
+          slot.innerHTML = `<div class="text-xs text-rose-400 mono p-3">Erro ao renderizar diagrama ${id}: ${err.message}</div>`;
+        }
+      }
+    }
+
+    async function openDiagramModal(id, title) {
+      const modal = document.getElementById('diagram-modal');
+      const modalTitle = document.getElementById('modal-title');
+      const modalBody = document.getElementById('modal-body');
+      modalTitle.textContent = title;
+      modal.classList.remove('hidden');
+      try {
+        const { svg } = await mermaid.render(`modal-svg-${id}-${Date.now()}`, MERMAID_DEFS[id]);
+        modalBody.innerHTML = `<div class="w-full mermaid-container">${svg}</div>`;
+      } catch (err) {
+        modalBody.innerHTML = `<div class="text-rose-400 text-xs mono">${err.message}</div>`;
+      }
+    }
+
+    function closeDiagramModal() {
+      document.getElementById('diagram-modal').classList.add('hidden');
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeDiagramModal();
+    });
+
+    // -------------------------------------------------------------------------
+    // 2. TAB & DOCUMENT MODE CONTROLLER
+    // -------------------------------------------------------------------------
+    let expandAllMode = false;
+    let activeTabId = 'tab-overview';
+    let chartsInitialized = false;
+
+    function switchTab(tabId) {
+      if (expandAllMode) {
+        toggleExpandAll(false);
+      }
+      activeTabId = tabId;
+      document.querySelectorAll('.tab-section').forEach(sec => {
+        sec.classList.toggle('hidden', sec.id !== tabId);
+      });
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabId);
+      });
+      setTimeout(() => {
+        renderVisibleMermaidDiagrams();
+        if (tabId === 'tab-contracts') initCharts();
+      }, 40);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function toggleExpandAll(forceState) {
+      expandAllMode = typeof forceState === 'boolean' ? forceState : !expandAllMode;
+      const btnLabel = document.getElementById('expand-all-label');
+      const btn = document.getElementById('btn-expand-all');
+      if (expandAllMode) {
+        btnLabel.textContent = 'Voltar para Abas';
+        btn.classList.add('border-sky-500/60', 'bg-sky-500/15', 'text-sky-300');
+        document.querySelectorAll('.tab-section').forEach(sec => sec.classList.remove('hidden'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        setTimeout(() => {
+          renderVisibleMermaidDiagrams();
+          initCharts();
+        }, 60);
+      } else {
+        btnLabel.textContent = 'Modo Documento Completo';
+        btn.classList.remove('border-sky-500/60', 'bg-sky-500/15', 'text-sky-300');
+        switchTab(activeTabId);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // 3. TAB 2: MODULE FILTER & DIRECTORY TREE INSPECTOR
+    // -------------------------------------------------------------------------
+    function filterModules(modKey) {
+      document.querySelectorAll('.module-pill').forEach(p => {
+        const isAll = modKey === 'all' && p.id === 'mod-btn-all';
+        const isMatch = p.dataset.mod === modKey;
+        p.classList.toggle('active', isAll || isMatch);
+      });
+      document.querySelectorAll('[data-mod-card]').forEach(card => {
+        if (modKey === 'all') {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.toggle('hidden', card.dataset.modCard !== modKey);
+        }
+      });
+    }
+
+    const TREE_DETAILS = {
+      compose: {
+        path: '/srv/domus/infra/domus/cortex/compose.yaml',
+        badge: 'Docker Compose IaC',
+        summary: 'Define o container cortex_core respeitando todas as regras do Domus: mem_limit explícito (384m), no-new-privileges, passagem do dispositivo /dev/sr0 em modo leitura para o watcher óptico e conexão estrita às redes domus_internal, domus_db e notify_bus.',
+        snippet: `services:\n  cortex-core:\n    build: .\n    container_name: cortex_core\n    mem_limit: 384m\n    devices:\n      - "/dev/sr0:/dev/sr0:r"\n    networks:\n      - domus_internal\n      - domus_db\n      - notify_bus`
+      },
+      env: {
+        path: '/srv/domus/infra/domus/cortex/.env.example',
+        badge: 'Segredos & Config',
+        summary: 'Template versionado no Git com MAC address do PC Gamer Slave (para Wake-on-LAN), IP LAN do Worker GPU, URI do postgres-domus (cortex_db), URL do Apprise e tokens de serviço para Despensa e Carteira.',
+        snippet: `SLAVE_MAC=AA:BB:CC:DD:EE:FF\nSLAVE_HOST=192.168.x.50\nSLAVE_IDLE_TIMEOUT_SEC=600\nCORTEX_DB_URL=postgresql://cortex_app:CHANGE_ME@postgres-domus:5432/cortex_db\nDESPENSA_API_TOKEN=CHANGE_ME\nCARTEIRA_API_TOKEN=CHANGE_ME`
+      },
+      main: {
+        path: '/srv/domus/infra/domus/cortex/app/main.py',
+        badge: 'FastAPI Async Hub',
+        summary: 'Entrypoint HTTP e WebSocket do C0rt3x Core. Inicializa os 7 módulos, abre o canal /api/cortex/channel (ou unifica com /api/nodes/{node_id}/channel), inicia a thread pyudev do leitor de CD/DVD e expõe endpoints de status para o Domus Dashboard.',
+        snippet: `@app.on_event("startup")\nasync def boot_cortex():\n    await memory_engine.init_pgvector()\n    optical_watcher.start(loop=asyncio.get_running_loop())\n    slave_power.start_idle_reaper()`
+      },
+      spatial: {
+        path: '/srv/domus/infra/domus/cortex/app/core/spatial_engine.py',
+        badge: 'Motor Espacial',
+        summary: 'Resolve o efeito Follow-Me. Mantém o grafo dos cômodos e calcula scores por morador combinando SNR de voz (100), detecção facial na câmera do node (80, TTL 30s), radar mmWave (50, TTL 60s) e estado Wi-Fi/Tailscale.',
+        snippet: `def get_best_output_node(self, user_id: str) -> OutputTarget:\n    # Expira sinais antigos, aplica pesos e retorna\n    # o node_id mais proximo ou fallback 'apprise_telegram'`
+      },
+      session: {
+        path: '/srv/domus/infra/domus/cortex/app/core/session_manager.py',
+        badge: 'Sessão Centrada no Usuário',
+        summary: 'Gerencia sessões indexadas por user_id (ex: "will"), preservando histórico curto da conversa mesmo quando o morador troca de cômodo e enviando a flag expect_reply_seconds para abertura automática do microfone.',
+        snippet: `async def deliver_response(self, user_id: str, text: str, expect_reply: int = 0):\n    target = spatial_engine.get_best_output_node(user_id)\n    await ws_gateway.send_speak(target, text, expect_reply_seconds=expect_reply)`
+      },
+      router: {
+        path: '/srv/domus/infra/domus/cortex/app/core/cognitive_router.py',
+        badge: 'Fast-Path vs Slow-Path',
+        summary: 'Classificador de intenção híbrido. Comandos determinísticos (luz, ar-condicionado, mídia local) executam em <50ms na CPU do Domus. Consultas abertas ou multi-tool acordam a GPU do PC Gamer via SlavePowerManager.',
+        snippet: `intent = fast_intent_matcher.match(transcript)\nif intent.is_deterministic:\n    return await tool_registry.execute(intent)\nawait slave_power.ensure_online()\nreturn await llm_client.run_with_tools(transcript, memories)`
+      },
+      power: {
+        path: '/srv/domus/infra/domus/cortex/app/core/slave_power.py',
+        badge: 'Orquestrador WoL S3',
+        summary: 'Envia UDP Magic Packet na porta 9 para acordar o PC Gamer da suspensão S3 (~2-3s), monitora healthcheck da API de inferência e dispara suspensão remota após 10 minutos sem uso.',
+        snippet: `async def ensure_online(self):\n    if self.state == "SLEEPING_S3":\n        send_magic_packet(self.slave_mac)\n        await self.wait_healthcheck(timeout=12.0)`
+      },
+      memory: {
+        path: '/srv/domus/infra/domus/cortex/app/core/memory_engine.py',
+        badge: 'Memória 3 Camadas',
+        summary: 'Persiste eventos episódicos e embeddings semânticos no postgres-domus (extensão pgvector). Recupera os 5 hábitos/fatos mais relevantes do morador antes de montar o prompt do LLM.',
+        snippet: `SELECT fact, 1 - (embedding <=> $1) AS score\nFROM semantic_memories\nWHERE user_id = $2\nORDER BY embedding <=> $1 LIMIT 5;`
+      },
+      optical: {
+        path: '/srv/domus/infra/domus/cortex/app/watchers/optical_drive.py',
+        badge: 'Watcher /dev/sr0',
+        summary: 'Escuta eventos udev de inserção/remoção no drive óptico PLDS DVD+/-RW. Calcula DiscID com libdiscid, consulta MusicBrainz e dispara prompt proativo para o usuário com janela de resposta automática.',
+        snippet: `for device in iter(monitor.poll, None):\n    if device.get("ID_CDROM_MEDIA_TRACK_COUNT_AUDIO"):\n        disc = discid.read("/dev/sr0")\n        await proactive_engine.on_audio_cd_inserted(disc)`
+      },
+      tools: {
+        path: '/srv/domus/infra/domus/cortex/app/tools/*.py',
+        badge: 'Tool / MCP Registry',
+        summary: 'Adaptadores HTTP/MQTT isolados para cada domínio: despensa_tool.py, carteira_tool.py (via HTTPS autenticado), iot_tool.py (AirPower/ThingsBoard/HA), media_tool.py (Music Assistant/Navidrome/Snapcast) e notify_tool.py (Apprise).',
+        snippet: `@tool("despensa.get_expiring_items")\nasync def get_expiring_items(days: int = 7) -> list[dict]:\n    return await http_client.get("https://despensa.solobit.com.br/api/items/expiring")`
+      }
+    };
+
+    function selectTreeItem(key) {
+      document.querySelectorAll('.tree-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.tree === key);
+      });
+      const item = TREE_DETAILS[key];
+      const panel = document.getElementById('tree-detail-panel');
+      if (!item || !panel) return;
+      panel.innerHTML = `
+        <div class="space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <code class="mono text-xs text-sky-300 font-semibold">${item.path}</code>
+            <span class="text-[11px] px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30">${item.badge}</span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">${item.summary}</p>
+        </div>
+        <pre class="mt-4 mono text-[11px] bg-domus-card border border-domus-border rounded-lg p-3 overflow-x-auto custom-scrollbar text-emerald-200 leading-relaxed">${item.snippet}</pre>
+      `;
+    }
+
+    // -------------------------------------------------------------------------
+    // 4. TAB 3: SIMULADOR FOLLOW-ME (6 PASSOS)
+    // -------------------------------------------------------------------------
+    const FOLLOW_STEPS = [
+      {
+        pill: '1. Cozinha',
+        time: 't = 00s',
+        title: 'Will inicia interação no Tablet da Cozinha',
+        desc: 'O detector local (openWakeWord) no Galaxy Tab S6 Lite reconhece "Cortex". O microfone grava a pergunta e envia pelo canal WebSocket persistente (<15ms).',
+        willRoom: 'cozinha',
+        outputRoom: 'cozinha',
+        sessionState: 'OPEN (sess-will-01)',
+        slaveState: 'SLEEPING_S3 (~3W)',
+        speech: '<strong>Will (Cozinha):</strong> "Cortex, o que tem na despensa vencendo essa semana que dá pra fazer pro jantar?"',
+        roomNotes: {
+          cozinha: '🎙️ Wake-word "Cortex" detectado • Áudio capturado (SNR alto)',
+          sala: 'Standby',
+          banheiro: 'Câmera ML Kit em standby',
+          rua_tailnet: 'Celular pessoal no Wi-Fi DOMUS-LAN-5G'
+        },
+        scores: { cozinha: 100, sala: 0, banheiro: 0, rua_tailnet: 0 },
+        dir: 'Uplink (Android → Core)',
+        json: {
+          type: "CORTEX_EVENT",
+          node_id: "tab-cozinha",
+          room: "cozinha",
+          event: "VOICE_COMMAND_AUDIO",
+          payload: { wake_word: "cortex", snr_db: 24.5, user_hint: "will", audio_codec: "opus_16khz" }
+        }
+      },
+      {
+        pill: '2. WoL GPU',
+        time: 't = 01s',
+        title: 'Cognitive Router classifica Slow-Path e acorda PC Gamer',
+        desc: 'O pedido envolve raciocínio aberto + consulta à Despensa. O Slave Power Manager envia um Magic Packet Wake-on-LAN para acordar o PC Gamer da suspensão S3 enquanto o tablet toca um chime discreto.',
+        willRoom: 'cozinha',
+        outputRoom: 'cozinha',
+        sessionState: 'ROUTING_SLOW_PATH',
+        slaveState: 'WAKING_WOL (2.5s)',
+        speech: '<strong>C0rt3x Core:</strong> Dispara Magic Packet UDP:9 para MAC do PC Gamer e envia <code class="mono">PLAY_SOUND</code> para feedback imediato na cozinha.',
+        roomNotes: {
+          cozinha: '🔔 Feedback sonoro suave ("thinking chime")',
+          sala: 'Standby',
+          banheiro: 'Câmera ML Kit em standby',
+          rua_tailnet: 'Wi-Fi DOMUS-LAN-5G conectado'
+        },
+        scores: { cozinha: 95, sala: 0, banheiro: 0, rua_tailnet: 0 },
+        dir: 'Core Interno (WoL + Dispatch)',
+        json: {
+          module: "slave_power_manager",
+          action: "WAKE_ON_LAN_S3",
+          target_mac: "AA:BB:CC:DD:EE:FF",
+          expected_boot_ms: 2500,
+          provisional_feedback: { node_id: "tab-cozinha", effect: "cortex_thinking_chime" }
+        }
+      },
+      {
+        pill: '3. Sala',
+        time: 't = 03s',
+        title: 'Will caminha pela Sala enquanto GPU consulta a Despensa',
+        desc: 'Will sai da cozinha e atravessa a sala. O radar mmWave ESP32 da sala detecta deslocamento (peso 50). Ao mesmo tempo, o PC Gamer acorda, transcreve o áudio com Faster-Whisper e o LLM consulta a API da Minha Despensa.',
+        willRoom: 'sala',
+        outputRoom: 'cozinha',
+        sessionState: 'INFERENCE_RUNNING',
+        slaveState: 'BUSY_INFERENCE (LLM + Tool)',
+        speech: '<strong>Tool Call:</strong> <code class="mono">despensa.get_expiring_items(days=5)</code> retorna: <em>creme de leite (vence em 2 dias), cogumelos, arroz arbóreo</em>.',
+        roomNotes: {
+          cozinha: 'Último sinal de voz há 3s (decaimento)',
+          sala: '📡 Radar ESP32 mmWave detectou movimento na passagem',
+          banheiro: 'Câmera ML Kit em standby',
+          rua_tailnet: 'Wi-Fi DOMUS-LAN-5G conectado'
+        },
+        scores: { cozinha: 75, sala: 50, banheiro: 0, rua_tailnet: 0 },
+        dir: 'Tool Execution (Core → SoloBit HTTPS)',
+        json: {
+          tool_call: "despensa.get_expiring_items",
+          transport: "HTTPS (token dedicado, sem ponte de rede Docker)",
+          result_items: [
+            { name: "Creme de Leite Fresco", expires_in_days: 2 },
+            { name: "Arroz Arbóreo", qty: "500g" }
+          ]
+        }
+      },
+      {
+        pill: '4. Banheiro',
+        time: 't = 05s',
+        title: 'Will para diante do espelho do Banheiro (Handoff!)',
+        desc: 'O celular antigo em modo quiosque ao lado do espelho detecta um rosto via Google ML Kit localmente (<100ms) e envia PRESENCE_DETECTED (peso 80). O Spatial Engine transfere o active_output_node de tab-cozinha para kiosk-banheiro!',
+        willRoom: 'banheiro',
+        outputRoom: 'banheiro',
+        sessionState: 'HANDOFF_EXECUTED',
+        slaveState: 'GENERATING_TTS (Piper)',
+        speech: '<strong>Spatial Engine:</strong> Banheiro (80 pts) supera Cozinha em decaimento. <code class="mono">active_output_node</code> atualizado para <code class="mono text-emerald-300">kiosk-banheiro</code>.',
+        roomNotes: {
+          cozinha: 'Sessão transferida para outro cômodo',
+          sala: 'Sem presença recente',
+          banheiro: '👁️ ML Kit detectou Will no espelho! Handoff ativado',
+          rua_tailnet: 'Wi-Fi DOMUS-LAN-5G conectado'
+        },
+        scores: { cozinha: 35, sala: 25, banheiro: 80, rua_tailnet: 0 },
+        dir: 'Uplink (Banheiro → Core)',
+        json: {
+          type: "CORTEX_EVENT",
+          node_id: "kiosk-banheiro",
+          room: "banheiro",
+          event: "PRESENCE_DETECTED",
+          payload: { source: "CAMERA_MLKIT", face_detected: true, person_hint: "will", confidence: 0.94 }
+        }
+      },
+      {
+        pill: '5. Resposta',
+        time: 't = 06s',
+        title: 'C0rt3x responde no Banheiro e acende o HUD no espelho',
+        desc: 'O Session Manager despacha CORTEX_HANDOFF_IN (para acender o espelho com o card da receita) e CORTEX_SPEAK (tocado na Alexa Bluetooth / alto-falante do banheiro), com janela expect_reply_seconds = 8.',
+        willRoom: 'banheiro',
+        outputRoom: 'banheiro',
+        sessionState: 'AWAITING_REPLY (8s)',
+        slaveState: 'ONLINE_IDLE (timer 600s)',
+        speech: '<strong>C0rt3x (Espelho Banheiro):</strong> "Will, você tem creme de leite vencendo em 2 dias e arroz arbóreo. Sugiro um risoto de cogumelos. Quer que eu separe a receita?"',
+        roomNotes: {
+          cozinha: 'Tela entra em repouso',
+          sala: 'Standby',
+          banheiro: '🔊 Alexa BT reproduz voz neural + HUD exibe ingredientes',
+          rua_tailnet: 'Wi-Fi DOMUS-LAN-5G conectado'
+        },
+        scores: { cozinha: 15, sala: 10, banheiro: 90, rua_tailnet: 0 },
+        dir: 'Downlink (Core → Banheiro)',
+        json: {
+          command_id: "cmd-cortex-412",
+          action: "CORTEX_SPEAK",
+          target_node: "kiosk-banheiro",
+          payload: {
+            session_id: "sess-will-01",
+            text: "Will, você tem creme de leite vencendo em 2 dias...",
+            audio_url: "https://cortex.domus.solobit.com.br/api/tts/cmd-412.wav",
+            show_hud: true,
+            expect_reply_seconds: 8
+          }
+        }
+      },
+      {
+        pill: '6. Rua/Tailnet',
+        time: 't = 25m',
+        title: 'Will sai de casa: Handoff automático para Tailnet & Telegram',
+        desc: 'O app domus-mobile detecta desconexão do Wi-Fi DOMUS-LAN-5G mantendo túnel Tailscale ativo. O Spatial Engine move Will para rua_tailnet e o C0rt3x envia os itens faltantes via Apprise (Telegram privado).',
+        willRoom: 'rua_tailnet',
+        outputRoom: 'rua_tailnet',
+        sessionState: 'EXTERNAL_ASYNC',
+        slaveState: 'SLEEPING_S3 (Auto-Sleep)',
+        speech: '<strong>Apprise Telegram (Rua):</strong> "Will, como você saiu de casa, enviei aqui a lista do que falta comprar para o risoto de hoje à noite: queijo parmesão e caldo de legumes."',
+        roomNotes: {
+          cozinha: 'Casa vazia / Modo economia',
+          sala: 'Radar sem presença',
+          banheiro: 'Espelho em standby',
+          rua_tailnet: '📲 Tailnet ativo fora de casa → Entrega via Apprise Telegram'
+        },
+        scores: { cozinha: 0, sala: 0, banheiro: 0, rua_tailnet: 100 },
+        dir: 'Core → notify_bus (Apprise)',
+        json: {
+          event: "LOCATION_STATE_CHANGED",
+          user: "will",
+          zone: "rua_tailnet",
+          delivery_channel: "POST http://apprise:8000/notify/apprise",
+          tags: ["admin"],
+          body: "Lista do jantar: queijo parmesao, caldo de legumes."
+        }
+      }
+    ];
+
+    let followIndex = 0;
+    let followTimer = null;
+
+    function renderFollowStep(idx) {
+      followIndex = idx;
+      const step = FOLLOW_STEPS[idx];
+
+      // Step Pills
+      const pillsEl = document.getElementById('follow-step-pills');
+      pillsEl.innerHTML = FOLLOW_STEPS.map((s, i) => `
+        <button onclick="followGoTo(${i})" class="px-2.5 py-2 rounded-lg border text-xs font-medium text-left transition-all cursor-pointer ${
+          i === idx
+            ? 'border-sky-500/60 bg-sky-500/15 text-sky-300 shadow-sm'
+            : 'border-domus-border bg-domus-card text-slate-400 hover:text-white'
+        }">
+          <div class="flex items-center justify-between">
+            <span>${s.pill}</span>
+            <span class="mono text-[10px] opacity-75">${s.time}</span>
+          </div>
+        </button>
+      `).join('');
+
+      // Zones styling
+      ['cozinha', 'sala', 'banheiro', 'rua_tailnet'].forEach(z => {
+        const card = document.getElementById(`zone-${z}`);
+        const status = document.getElementById(`status-${z}`);
+        const badge = document.getElementById(`badge-${z}`);
+        card.classList.remove('room-active-will', 'room-active-output');
+        if (step.willRoom === z) card.classList.add('room-active-will');
+        if (step.outputRoom === z) card.classList.add('room-active-output');
+        status.textContent = step.roomNotes[z];
+        if (step.willRoom === z && step.outputRoom === z) {
+          badge.className = 'text-[10px] mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+        } else if (step.willRoom === z) {
+          badge.className = 'text-[10px] mono px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/40';
+        } else {
+          badge.className = 'text-[10px] mono px-2 py-0.5 rounded bg-slate-800 text-slate-400';
+        }
+      });
+
+      document.getElementById('follow-session-state').textContent = step.sessionState;
+      document.getElementById('follow-slave-state').textContent = step.slaveState;
+      document.getElementById('follow-output-node').textContent =
+        step.outputRoom === 'cozinha' ? 'tab-cozinha' :
+        step.outputRoom === 'banheiro' ? 'kiosk-banheiro + Alexa' :
+        step.outputRoom === 'rua_tailnet' ? 'Apprise (Telegram) + Mobile' : 'tv-sala';
+
+      document.getElementById('follow-step-badge').textContent = `Passo ${idx + 1} / ${FOLLOW_STEPS.length}`;
+      document.getElementById('follow-step-time').textContent = step.time;
+      document.getElementById('follow-step-title').textContent = step.title;
+      document.getElementById('follow-step-desc').textContent = step.desc;
+      document.getElementById('follow-speech-box').innerHTML = step.speech;
+      document.getElementById('follow-direction-tag').textContent = step.dir;
+      document.getElementById('follow-json-box').textContent = JSON.stringify(step.json, null, 2);
+
+      // Score Bars
+      const labels = { cozinha: 'Cozinha', sala: 'Sala', banheiro: 'Banheiro', rua_tailnet: 'Rua / Tailnet' };
+      document.getElementById('follow-score-bars').innerHTML = Object.entries(step.scores).map(([k, val]) => {
+        const isTop = val === Math.max(...Object.values(step.scores)) && val > 0;
+        return `
+          <div>
+            <div class="flex justify-between text-[11px] mb-1">
+              <span class="${isTop ? 'text-white font-semibold' : 'text-slate-400'}">${labels[k]}</span>
+              <span class="mono ${isTop ? 'text-emerald-400 font-bold' : 'text-slate-500'}">${val} pts</span>
+            </div>
+            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-300 ${isTop ? 'bg-emerald-400' : 'bg-sky-500/50'}" style="width: ${val}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function followGoTo(idx) {
+      if (followTimer) { clearInterval(followTimer); followTimer = null; updatePlayBtn('follow-play-btn', false); }
+      renderFollowStep(idx);
+    }
+    function followNext() { followGoTo((followIndex + 1) % FOLLOW_STEPS.length); }
+    function followPrev() { followGoTo((followIndex - 1 + FOLLOW_STEPS.length) % FOLLOW_STEPS.length); }
+    function followTogglePlay() {
+      if (followTimer) {
+        clearInterval(followTimer);
+        followTimer = null;
+        updatePlayBtn('follow-play-btn', false);
+      } else {
+        updatePlayBtn('follow-play-btn', true);
+        followTimer = setInterval(() => {
+          renderFollowStep((followIndex + 1) % FOLLOW_STEPS.length);
+        }, 3200);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // 5. TAB 4: SIMULADOR CD /dev/sr0 & MULTI-ROOM (6 PASSOS)
+    // -------------------------------------------------------------------------
+    const CD_STEPS = [
+      {
+        pill: '1. Inserção CD',
+        time: 't = 0.0s',
+        title: 'CD inserido no drive físico /dev/sr0 do Domus',
+        desc: 'Ao fechar a gaveta do leitor PLDS DVD+/-RW DS-8ABSH, o kernel Linux dispara um evento udev sem que nenhum serviço precise fazer polling contínuo no disco.',
+        driveStatus: '💿 Mídia detectada: ID_CDROM_MEDIA=1 (12 faixas de áudio)',
+        brainStatus: 'Optical Watcher (pyudev) captura evento instantâneo',
+        audioStatus: 'Zona Quarto em standby',
+        ripBadge: 'Cache FLAC: Aguardando TOC',
+        highlightTrack: false,
+        quartoActive: false,
+        dialogue: '<strong>Evento Físico:</strong> Gaveta fechada no servidor Domus (<code class="mono">/dev/sr0</code>). Zero comando de voz necessário até aqui.',
+        component: 'udev → optical_drive.py',
+        json: {
+          kernel_device: "/dev/sr0",
+          model: "PLDS DVD+/-RW DS-8ABSH",
+          ID_CDROM_MEDIA: 1,
+          ID_CDROM_MEDIA_CD: 1,
+          ID_CDROM_MEDIA_TRACK_COUNT_AUDIO: 12
+        }
+      },
+      {
+        pill: '2. MusicBrainz',
+        time: 't = 1.4s',
+        title: 'Leitura da TOC (libdiscid) e match no MusicBrainz',
+        desc: 'O módulo optical_drive.py lê a tabela de alocação do CD em menos de 2 segundos, calcula o DiscID e obtém o álbum exato e os nomes de todas as 12 faixas.',
+        driveStatus: '✅ TOC lida com sucesso (DiscID único calculado)',
+        brainStatus: 'Match: "Arctic Monkeys — AM" (Faixa 09 = Fireside)',
+        audioStatus: 'Metadados carregados no Media Tool',
+        ripBadge: 'Cache FLAC: Verificando Navidrome',
+        highlightTrack: false,
+        quartoActive: false,
+        dialogue: '<strong>Metadados Resolvidos:</strong> Artista: <em>Arctic Monkeys</em> • Álbum: <em>AM</em> • 12 faixas indexadas na sessão.',
+        component: 'libdiscid + MusicBrainz',
+        json: {
+          disc_id: "xR8k...TocHash",
+          artist: "Arctic Monkeys",
+          album: "AM",
+          year: 2013,
+          tracks_resolved: 12,
+          track_09: "Fireside"
+        }
+      },
+      {
+        pill: '3. Pergunta Proativa',
+        time: 't = 2.1s',
+        title: 'C0rt3x identifica Will e faz a pergunta proativa por voz',
+        desc: 'O Spatial Engine verifica o node mais próximo de Will (câmera/presença). O Proactive Engine envia CORTEX_SPEAK usando voz neural (Piper TTS).',
+        driveStatus: '📀 CD pronto para leitura direta / ripping',
+        brainStatus: 'Spatial Engine → Will identificado no node ativo',
+        audioStatus: 'Preparando zonas de áudio',
+        ripBadge: 'Cache FLAC: Em espera',
+        highlightTrack: false,
+        quartoActive: false,
+        dialogue: '<strong>C0rt3x (Voz Neural):</strong> "Will, um CD de Arctic Monkeys foi inserido, deseja reproduzir a mídia?"',
+        component: 'Downlink CORTEX_SPEAK',
+        json: {
+          command_id: "cmd-cd-099",
+          action: "CORTEX_SPEAK",
+          payload: {
+            text: "Will, um CD de Arctic Monkeys foi inserido, deseja reproduzir a mídia?",
+            show_hud: true,
+            expect_reply_seconds: 8
+          }
+        }
+      },
+      {
+        pill: '4. Escuta Automática',
+        time: 't = 5.2s',
+        title: 'Microfone abre sozinho por 8 segundos (sem wake-word)',
+        desc: 'Como a mensagem trouxe expect_reply_seconds: 8, assim que a fala termina o node Android acende o indicador visual de escuta e capta a resposta natural de Will.',
+        driveStatus: '📀 CD pronto',
+        brainStatus: '🎙️ Node em escuta ativa (janela de 8s sem dizer "Cortex")',
+        audioStatus: 'Aguardando faixa & cômodo alvo',
+        ripBadge: 'Cache FLAC: Em espera',
+        highlightTrack: false,
+        quartoActive: false,
+        dialogue: '<strong>Will responde naturalmente:</strong> "Sim, desejo, reproduza Fireside no quarto."',
+        component: 'Uplink VOICE_COMMAND_AUDIO',
+        json: {
+          type: "CORTEX_EVENT",
+          event: "VOICE_COMMAND_AUDIO",
+          in_reply_to: "cmd-cd-099",
+          wake_word_bypassed: true,
+          stt_transcript: "Sim, desejo, reproduza Fireside no quarto"
+        }
+      },
+      {
+        pill: '5. Resolução Media',
+        time: 't = 6.3s',
+        title: 'Media Tool mapeia "Fireside" → Faixa 09 e Zona "Quarto"',
+        desc: 'O Cognitive Router resolve a confirmação afirmativa no contexto do CD recém-inserido, casa foneticamente "Fireside" com a faixa 09 de AM e seleciona a zona de áudio "quarto".',
+        driveStatus: '🔊 Lendo stream PCM/FLAC da Faixa 09',
+        brainStatus: 'MediaTool: track=09 ("Fireside") | zone="quarto"',
+        audioStatus: 'Conectando ao player/Alexa do Quarto',
+        ripBadge: 'Cache FLAC: Agendado',
+        highlightTrack: true,
+        quartoActive: false,
+        dialogue: '<strong>C0rt3x confirma:</strong> "Certo, tocando no quarto."',
+        component: 'media_tool.py',
+        json: {
+          tool: "media.play_optical_track",
+          params: {
+            album: "AM",
+            track_number: 9,
+            track_title: "Fireside",
+            target_zone: "quarto",
+            confirm_tts: "Certo, tocando no quarto."
+          }
+        }
+      },
+      {
+        pill: '6. Play + Auto-Rip',
+        time: 't = 6.8s',
+        title: 'Reprodução sincronizada no Quarto + Ripping em FLAC',
+        desc: 'Music Assistant + Snapcast iniciam o streaming imediato de "Fireside" no quarto. Em paralelo, um worker background ripa o CD em FLAC para o Navidrome: da próxima vez, o álbum toca instantaneamente sem desgaste mecânico.',
+        driveStatus: '💿 Auto-Ripping background (cdparanoia → FLAC)',
+        brainStatus: 'Episodic Memory salva preferência musical no quarto',
+        audioStatus: '🎶 Tocando: Arctic Monkeys - Fireside (Quarto)',
+        ripBadge: 'Cache FLAC: Ripando para Navidrome (24%)',
+        highlightTrack: true,
+        quartoActive: true,
+        dialogue: '<strong>Resultado Final:</strong> Música tocando no quarto em tempo real + biblioteca local Navidrome sendo alimentada automaticamente.',
+        component: 'Music Assistant + Navidrome',
+        json: {
+          status: "PLAYING",
+          zone: "quarto",
+          engine: "music_assistant_snapcast",
+          track: "09 - Fireside (Arctic Monkeys)",
+          background_job: {
+            action: "RIP_CD_TO_FLAC",
+            destination: "/srv/domus/docker/domus/media/music/Arctic Monkeys/AM/"
+          }
+        }
+      }
+    ];
+
+    let cdIndex = 0;
+    let cdTimer = null;
+
+    function renderCdStep(idx) {
+      cdIndex = idx;
+      const step = CD_STEPS[idx];
+
+      document.getElementById('cd-step-pills').innerHTML = CD_STEPS.map((s, i) => `
+        <button onclick="cdGoTo(${i})" class="px-2.5 py-2 rounded-lg border text-xs font-medium text-left transition-all cursor-pointer ${
+          i === idx
+            ? 'border-amber-500/60 bg-amber-500/15 text-amber-300 shadow-sm'
+            : 'border-domus-border bg-domus-card text-slate-400 hover:text-white'
+        }">
+          <div class="flex items-center justify-between">
+            <span>${s.pill}</span>
+            <span class="mono text-[10px] opacity-75">${s.time}</span>
+          </div>
+        </button>
+      `).join('');
+
+      document.getElementById('cd-drive-status').textContent = step.driveStatus;
+      document.getElementById('cd-brain-status').textContent = step.brainStatus;
+      document.getElementById('cd-audio-status').textContent = step.audioStatus;
+      document.getElementById('cd-rip-badge').textContent = step.ripBadge;
+
+      const track09 = document.getElementById('cd-track-09');
+      if (step.highlightTrack) {
+        track09.className = 'px-2.5 py-1.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/50 font-bold shadow-sm transition-all';
+      } else {
+        track09.className = 'px-2.5 py-1.5 rounded bg-domus-card text-slate-300 border border-domus-border/60 transition-all';
+      }
+
+      const quartoCard = document.getElementById('cd-zone-quarto');
+      const quartoBadge = document.getElementById('cd-zone-quarto-badge');
+      if (step.quartoActive) {
+        quartoCard.className = 'bg-emerald-500/15 border border-emerald-500/50 rounded-lg p-2.5 flex items-center justify-between transition-all';
+        quartoBadge.className = 'mono text-[10px] text-emerald-300 font-bold';
+        quartoBadge.textContent = 'PLAYING ♪';
+      } else {
+        quartoCard.className = 'bg-domus-bg border border-domus-border rounded-lg p-2.5 flex items-center justify-between transition-all';
+        quartoBadge.className = 'mono text-[10px] text-slate-400';
+        quartoBadge.textContent = 'STANDBY';
+      }
+
+      document.getElementById('cd-step-badge').textContent = `Passo ${idx + 1} / ${CD_STEPS.length}`;
+      document.getElementById('cd-step-time').textContent = step.time;
+      document.getElementById('cd-step-title').textContent = step.title;
+      document.getElementById('cd-step-desc').textContent = step.desc;
+      document.getElementById('cd-dialogue-box').innerHTML = step.dialogue;
+      document.getElementById('cd-step-component').textContent = step.component;
+      document.getElementById('cd-json-box').textContent = JSON.stringify(step.json, null, 2);
+    }
+
+    function cdGoTo(idx) {
+      if (cdTimer) { clearInterval(cdTimer); cdTimer = null; updatePlayBtn('cd-play-btn', false); }
+      renderCdStep(idx);
+    }
+    function cdNext() { cdGoTo((cdIndex + 1) % CD_STEPS.length); }
+    function cdPrev() { cdGoTo((cdIndex - 1 + CD_STEPS.length) % CD_STEPS.length); }
+    function cdTogglePlay() {
+      if (cdTimer) {
+        clearInterval(cdTimer);
+        cdTimer = null;
+        updatePlayBtn('cd-play-btn', false);
+      } else {
+        updatePlayBtn('cd-play-btn', true);
+        cdTimer = setInterval(() => {
+          renderCdStep((cdIndex + 1) % CD_STEPS.length);
+        }, 3200);
+      }
+    }
+
+    function updatePlayBtn(id, playing) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.innerHTML = playing
+        ? `<i data-lucide="pause" class="w-4 h-4"></i> Pausar`
+        : `<i data-lucide="play" class="w-4 h-4"></i> Auto-Play`;
+      lucide.createIcons();
+    }
+
+    // -------------------------------------------------------------------------
+    // 6. TAB 5: WEBSOCKET v2 CONTRACT INSPECTOR & CHART.JS
+    // -------------------------------------------------------------------------
+    const WS_UP_EXAMPLES = {
+      PRESENCE_DETECTED: {
+        type: "CORTEX_EVENT",
+        node_id: "kiosk-banheiro",
+        room: "banheiro",
+        event: "PRESENCE_DETECTED",
+        payload: { source: "CAMERA_MLKIT", face_detected: true, person_hint: "will", confidence: 0.94 }
+      },
+      WAKE_WORD_DETECTED: {
+        type: "CORTEX_EVENT",
+        node_id: "tab-cozinha",
+        room: "cozinha",
+        event: "WAKE_WORD_DETECTED",
+        payload: { engine: "openWakeWord", keyword: "cortex", score: 0.91, timestamp: "2026-11-15T13:20:05Z" }
+      },
+      VOICE_COMMAND_AUDIO: {
+        type: "CORTEX_EVENT",
+        node_id: "tab-cozinha",
+        room: "cozinha",
+        event: "VOICE_COMMAND_AUDIO",
+        payload: { session_id: "sess-will-01", codec: "opus_16khz", snr_db: 24.5, audio_b64: "<stream_chunks>" }
+      },
+      LOCATION_STATE_CHANGED: {
+        type: "CORTEX_EVENT",
+        node_id: "mobile-will",
+        room: "rua_tailnet",
+        event: "LOCATION_STATE_CHANGED",
+        payload: { user: "will", wifi_ssid: null, tailscale_ip: "100.x.y.44", home_present: false }
+      }
+    };
+
+    const WS_DOWN_EXAMPLES = {
+      CORTEX_SPEAK: {
+        command_id: "cmd-cortex-901",
+        action: "CORTEX_SPEAK",
+        payload: {
+          session_id: "sess-will-20261115",
+          text: "Will, um CD de Arctic Monkeys foi inserido. Deseja reproduzir a mídia?",
+          audio_url: "https://cortex.domus.solobit.com.br/api/tts/stream/cmd-cortex-901.wav",
+          show_hud: true,
+          expect_reply_seconds: 8
+        }
+      },
+      CORTEX_LISTEN_NOW: {
+        command_id: "cmd-cortex-902",
+        action: "CORTEX_LISTEN_NOW",
+        payload: { session_id: "sess-will-20261115", timeout_seconds: 8, show_listening_ring: true }
+      },
+      CORTEX_HANDOFF_IN: {
+        command_id: "cmd-cortex-903",
+        action: "CORTEX_HANDOFF_IN",
+        payload: {
+          session_id: "sess-will-20261115",
+          origin_room: "cozinha",
+          wake_screen_softly: true,
+          summary_card: { title: "Receita sugerida", items: ["Creme de leite (vence em 2d)", "Arroz arbóreo"] }
+        }
+      },
+      MEDIA_PLAY_STREAM: {
+        command_id: "cmd-cortex-904",
+        action: "MEDIA_PLAY_STREAM",
+        payload: {
+          zone: "quarto",
+          route_via: "bluetooth_alexa_or_speaker",
+          stream_url: "https://music.domus.solobit.com.br/stream/snapcast/quarto",
+          track_meta: { artist: "Arctic Monkeys", album: "AM", title: "Fireside", track: 9 }
+        }
+      }
+    };
+
+    function selectWsUp(key) {
+      document.querySelectorAll('.ws-up-btn').forEach(b => {
+        const active = b.dataset.wsUp === key;
+        b.className = active
+          ? 'ws-up-btn text-[11px] mono px-2.5 py-1 rounded border border-sky-500/50 bg-sky-500/15 text-sky-300 cursor-pointer'
+          : 'ws-up-btn text-[11px] mono px-2.5 py-1 rounded border border-domus-border bg-domus-card text-slate-300 cursor-pointer';
+      });
+      document.getElementById('ws-up-pre').textContent = JSON.stringify(WS_UP_EXAMPLES[key], null, 2);
+    }
+
+    function selectWsDown(key) {
+      document.querySelectorAll('.ws-down-btn').forEach(b => {
+        const active = b.dataset.wsDown === key;
+        b.className = active
+          ? 'ws-down-btn text-[11px] mono px-2.5 py-1 rounded border border-emerald-500/50 bg-emerald-500/15 text-emerald-300 cursor-pointer'
+          : 'ws-down-btn text-[11px] mono px-2.5 py-1 rounded border border-domus-border bg-domus-card text-slate-300 cursor-pointer';
+      });
+      document.getElementById('ws-down-pre').textContent = JSON.stringify(WS_DOWN_EXAMPLES[key], null, 2);
+    }
+
+    function copyJson(preId, btnEl) {
+      const txt = document.getElementById(preId).textContent;
+      if (navigator.clipboard) navigator.clipboard.writeText(txt);
+      if (btnEl) {
+        const orig = btnEl.textContent;
+        btnEl.textContent = 'Copiado!';
+        setTimeout(() => { btnEl.textContent = orig; }, 1400);
+      }
+    }
+
+    function initCharts() {
+      if (chartsInitialized) return;
+      chartsInitialized = true;
+
+      Chart.defaults.color = '#94a3b8';
+      Chart.defaults.borderColor = '#1f293d';
+
+      // Chart 1: Real RAM Budget (7.2 GiB = 7372 MiB)
+      const ramCtx = document.getElementById('ramBudgetChart').getContext('2d');
+      new Chart(ramCtx, {
+        type: 'doughnut',
+        data: {
+          labels: [
+            'Platform Core (AdGuard, Kuma, Traefik, Apprise...): ~832 MiB',
+            'Domus Atual (Dashboard, PG-Domus, Apps): ~204 MiB',
+            'SoloBit Atual (Despensa, Carteira, PG-SoloBit): ~398 MiB',
+            'Kernel Linux & Buffers/Cache: ~1.630 MiB',
+            'C0rt3x Core (Planejado mem_limit): 384 MiB',
+            'Music Assistant + Navidrome (Planejado): 320 MiB',
+            'Folga Livre Estimada no Domus: ~3.604 MiB'
+          ],
+          datasets: [{
+            data: [832, 204, 398, 1630, 384, 320, 3604],
+            backgroundColor: [
+              '#38bdf8',
+              '#8b5cf6',
+              '#f43f5e',
+              '#475569',
+              '#10b981',
+              '#f59e0b',
+              'rgba(30, 41, 59, 0.55)'
+            ],
+            borderColor: '#0b0f19',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '58%',
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: { boxWidth: 11, font: { size: 11 }, padding: 10, color: '#cbd5e1' }
+            }
+          }
+        }
+      });
+
+      // Chart 2: Power Consumption & Wake Latency
+      const pwrCtx = document.getElementById('powerLatencyChart').getContext('2d');
+      new Chart(pwrCtx, {
+        type: 'bar',
+        data: {
+          labels: [
+            'Domus + PC Gamer S3 (Proposto)',
+            'PC Gamer Always-On 24/7',
+            'PC Gamer Desligado S5 (Boot Frio)'
+          ],
+          datasets: [
+            {
+              label: 'Consumo Médio Standby/Idle (Watts)',
+              data: [28, 115, 25],
+              backgroundColor: 'rgba(56, 189, 248, 0.75)',
+              borderColor: '#38bdf8',
+              borderWidth: 1,
+              borderRadius: 6
+            },
+            {
+              label: 'Latência para Acordar GPU (Segundos)',
+              data: [2.5, 0.2, 35],
+              backgroundColor: 'rgba(245, 158, 11, 0.75)',
+              borderColor: '#f59e0b',
+              borderWidth: 1,
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: '#1f293d' }
+            },
+            x: {
+              grid: { display: false }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { font: { size: 11 }, color: '#cbd5e1' }
+            }
+          }
+        }
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 7. INITIALIZATION
+    // -------------------------------------------------------------------------
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      selectTreeItem('compose');
+      renderFollowStep(0);
+      renderCdStep(0);
+      selectWsUp('PRESENCE_DETECTED');
+      selectWsDown('CORTEX_SPEAK');
+      renderVisibleMermaidDiagrams();
+    });
+  </script>
+</body>
+</html>

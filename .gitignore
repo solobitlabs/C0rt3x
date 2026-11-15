@@ -1,0 +1,30 @@
+# Segredos & Ambiente
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python & Ambientes Virtuais
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Dados locais, dumps e mídia
+*.db
+*.sqlite
+*.sql
+*.dump
+*.wav
+*.mp3
+*.flac
+media/
+
+# Logs & OS
+*.log
+.DS_Store
+Thumbs.db
