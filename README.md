@@ -44,7 +44,7 @@ O **Domus C0rt3x** transforma uma infraestrutura doméstica modesta (**Domus Ser
 
 ## 🗺️ Roadmap de Implementação
 
-- [ ] **Fase 1 — Fundação `C0rt3x Core`:** Stack Docker em `domus_internal` (`mem_limit: 384m`), database `cortex_db` com `pgvector` no `postgres-domus`, orquestrador WoL S3 para o PC Gamer e integração das Tools (`despensa`, `carteira`, `iot`, `notify`).
+- [x] **Fase 1 — Fundação `C0rt3x Core`:** Núcleo FastAPI modular (`SpatialEngine`, `SessionManager`, `SlavePowerManager`, `CognitiveRouter`, `MemoryEngine`, `ToolRegistry`), database `cortex_db` no `postgres-domus` e gateway WebSocket v2.
 - [ ] **Fase 2 — Mídia Física & Multi-Room:** Deploy de `Navidrome` + `Music Assistant`, watcher `pyudev` em `/dev/sr0` + `libdiscid`/MusicBrainz, resposta sem wake-word (`expect_reply_seconds`) e ripping automático em FLAC.
 - [ ] **Fase 3 — Evolução da Borda (`domus-node-sdk` v2):** Eventos WebSocket v2, wake-word local (`openWakeWord`/`Sherpa-ONNX`), detecção facial ML Kit na borda e handoff *Follow-Me* entre cômodos e rua (Tailnet + Apprise).
 - [ ] **Fase 4 — Rotinas Autônomas Always-On:** Sensores ESP32 mmWave (`LD2410`), automação local sem nuvem e aprendizado contínuo de rotinas via memória vetorial.
