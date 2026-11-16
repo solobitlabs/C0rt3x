@@ -5,6 +5,7 @@ import io
 import logging
 import os
 from pathlib import Path
+import subprocess
 import tempfile
 from typing import Any, Dict, List, Optional
 import wave
@@ -208,8 +209,16 @@ async def speech_to_text(
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=True) as tmp:
         tmp.write(raw)
         tmp.flush()
+        proc = subprocess.run(
+            ["ffmpeg", "-y", "-i", tmp.name, "-ar", "16000", "-ac", "1", "-f", "f32le", "-"],
+            capture_output=True,
+            check=True,
+        )
+        import numpy as np
+
+        audio_np = np.frombuffer(proc.stdout, dtype=np.float32)
         model = _get_whisper_model()
-        segments, info = model.transcribe(tmp.name, language="pt", beam_size=5, vad_filter=True)
+        segments, info = model.transcribe(audio_np, language="pt", beam_size=5, vad_filter=True)
         text = " ".join(seg.text.strip() for seg in segments).strip()
         return {
             "text": text,
@@ -227,5 +236,5 @@ async def text_to_speech(
     voice = _get_piper_voice()
     buf = io.BytesIO()
     with wave.open(buf, "wb") as wav_file:
-        voice.synthesize(req.text.strip(), wav_file)
+        voice.synthesize_wav(req.text.strip(), wav_file)
     return Response(content=buf.getvalue(), media_type="audio/wav")
