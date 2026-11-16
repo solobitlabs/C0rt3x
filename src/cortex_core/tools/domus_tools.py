@@ -98,4 +98,6 @@ class DomusTelemetryClient:
         queries = dns.get("queries_today", 0)
         blocked = dns.get("blocked_today", 0)
         pct = dns.get("blocked_percent", 0)
-        return f"AdGuard DNS hoje: {queries} consultas totais e {blocked} bloqueios ({pct}%)."
+        if isinstance(queries, (int, float)) and isinstance(blocked, (int, float)):
+            return f"AdGuard DNS hoje: {queries} consultas totais e {blocked} bloqueios ({pct}%)."
+        return f"AdGuard DNS: {queries} (status: {blocked})."
