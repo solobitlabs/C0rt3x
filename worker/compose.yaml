@@ -23,11 +23,13 @@ services:
     image: domus-cortex-worker:latest
     container_name: cortex_worker
     restart: unless-stopped
-    mem_limit: 512m
+    mem_limit: 2g
     security_opt:
       - no-new-privileges:true
     env_file:
       - .env
+    volumes:
+      - ./voice_models:/app/voice_models
     ports:
       - "${WORKER_TAILSCALE_IP:-127.0.0.1}:8090:8090"
     depends_on:

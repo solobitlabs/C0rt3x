@@ -1,12 +1,13 @@
 """Gateway FastAPI e WebSocket Full-Duplex v2 do Domus C0rt3x Core."""
 
 import asyncio
+import base64
 from contextlib import asynccontextmanager
 import logging
 import re
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 import httpx
 from pydantic import BaseModel, Field
 
@@ -191,8 +192,7 @@ def create_app(settings: Optional[CortexSettings] = None) -> FastAPI:
         facts = await runtime.memory.list_semantic_memories(user_id=user_id, limit=limit)
         return {"user_id": user_id, "count": len(facts), "memories": facts}
 
-    @app.post("/api/cortex/interact")
-    async def interact(req: InteractRequest) -> Dict[str, Any]:
+    async def _run_interaction(req: InteractRequest) -> Dict[str, Any]:
         if req.node_id:
             runtime.spatial.record_presence(
                 user_id=req.user_id,
@@ -279,6 +279,76 @@ def create_app(settings: Optional[CortexSettings] = None) -> FastAPI:
             "delivered_via_ws": delivered_via_ws,
             "commands": plan.commands,
         }
+
+    @app.post("/api/cortex/interact")
+    async def interact(req: InteractRequest) -> Dict[str, Any]:
+        return await _run_interaction(req)
+
+    @app.post("/api/cortex/stt")
+    async def stt(request: Request) -> Dict[str, Any]:
+        if not runtime.slave_power.base_url:
+            raise HTTPException(status_code=503, detail="C0rt3x Compute nao configurado")
+        raw = await request.body()
+        if not raw:
+            raise HTTPException(status_code=400, detail="Audio vazio")
+        ctype = request.headers.get("content-type", "audio/webm")
+        headers = dict(runtime.slave_power.auth_headers)
+        headers["Content-Type"] = ctype
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(
+                f"{runtime.slave_power.base_url}/api/stt",
+                content=raw,
+                headers=headers,
+            )
+            if resp.status_code >= 400:
+                raise HTTPException(status_code=502, detail=f"STT falhou: {resp.text}")
+            return resp.json()
+
+    @app.post("/api/cortex/tts")
+    async def tts(payload: Dict[str, str]) -> Response:
+        if not runtime.slave_power.base_url:
+            raise HTTPException(status_code=503, detail="C0rt3x Compute nao configurado")
+        text = str(payload.get("text", "")).strip()
+        if not text:
+            raise HTTPException(status_code=400, detail="Texto vazio")
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(
+                f"{runtime.slave_power.base_url}/api/tts",
+                json={"text": text},
+                headers=runtime.slave_power.auth_headers,
+            )
+            if resp.status_code >= 400:
+                raise HTTPException(status_code=502, detail=f"TTS falhou: {resp.text}")
+            return Response(content=resp.content, media_type="audio/wav")
+
+    @app.post("/api/cortex/voice")
+    async def voice_interact(
+        request: Request,
+        user_id: str = "will",
+        room: str = "sala",
+        speak: bool = True,
+    ) -> Dict[str, Any]:
+        stt_data = await stt(request)
+        transcript = str(stt_data.get("text", "")).strip()
+        if not transcript:
+            return {"transcript": "", "response_text": "Nao consegui entender o audio.", "audio_base64": None}
+        result = await _run_interaction(InteractRequest(user_id=user_id, transcript=transcript, room=room))
+        result["transcript"] = transcript
+        audio_b64: Optional[str] = None
+        if speak and runtime.slave_power.base_url:
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    tts_resp = await client.post(
+                        f"{runtime.slave_power.base_url}/api/tts",
+                        json={"text": result["response_text"]},
+                        headers=runtime.slave_power.auth_headers,
+                    )
+                    if tts_resp.status_code == 200:
+                        audio_b64 = base64.b64encode(tts_resp.content).decode("ascii")
+            except Exception as exc:
+                logger.warning("Falha opcional no TTS: %s", exc)
+        result["audio_base64"] = audio_b64
+        return result
 
     @app.websocket("/api/nodes/{node_id}/channel")
     async def node_channel(websocket: WebSocket, node_id: str) -> None:
