@@ -22,7 +22,12 @@ Este arquivo mantém o estado vivo da implementação do **C0rt3x Core** para de
 ```text
 /srv/domus/apps/domus-cortex/
 ├── CONTEXT.md                    # Este guia vivo de contexto
+├── domus-cortex.md               # Arquitetura detalhada, atores e diretrizes do C0rt3x
 ├── README.md                     # Visão geral e índice do projeto
+├── daemon/                       # domus-cortex-daemon (telemetria Edge + GPU RX 7600)
+│   └── daemon.md                 # Documentação do daemon de telemetria
+├── worker/                       # Stack C0rt3x Compute (Ollama ROCm + Inferência + Voz)
+│   └── worker.md                 # Documentação do worker GPU/STT/TTS
 ├── requirements.txt              # Dependências de produção (FastAPI, Pydantic, httpx, asyncpg)
 ├── requirements-dev.txt          # Dependências de teste (pytest, pytest-asyncio)
 ├── docs/                         # Documentação técnica, ADRs e GitHub Pages (docs/index.html)
@@ -52,4 +57,7 @@ Este arquivo mantém o estado vivo da implementação do **C0rt3x Core** para de
 - [x] `cognitive_router.py` & `tools/` — Roteador híbrido + Tool Registry
 - [x] `memory_engine.py` — Memória em 3 camadas no `postgres-domus`
 - [x] `main.py` — API FastAPI + WebSocket Full-Duplex v2 + Deploy Docker no Domus
-- [x] `worker/` — Stack `C0rt3x Compute` (`ollama/ollama:rocm` + API autenticada `:8090`) para GPU AMD RX 7600 via Tailnet
+- [x] `worker/` — Stack `C0rt3x Compute` (`ollama/ollama:rocm` + API autenticada `:8090`, `qwen2.5:7b`, `nomic-embed-text`, `faster-whisper`, `piper-tts`)
+- [x] `daemon/` — `domus-cortex-daemon` enviando telemetria ao vivo (CPU, RAM, RX 7600, processos, Ollama) para o Domus Dashboard
+- [x] `domus.tools` & Memória Semântica — Tools Fast-Path reais (`server`, `compute`, `dns`, `notify`) e embeddings no `postgres-domus`
+- [ ] Base de Edge Nodes, Periféricos, Descoberta & Manutenção IoT (ver [docs/CONTINUITY_PLAN.md](docs/CONTINUITY_PLAN.md))
