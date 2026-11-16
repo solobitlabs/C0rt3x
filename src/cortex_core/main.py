@@ -15,6 +15,7 @@ from cortex_core.core.memory_engine import MemoryEngine
 from cortex_core.core.session_manager import SessionManager
 from cortex_core.core.slave_power import SlavePowerManager
 from cortex_core.core.spatial_engine import SignalSource, SpatialEngine
+from cortex_core.tools.domus_tools import DomusTelemetryClient
 from cortex_core.tools.notify_tool import AppriseNotifier
 from cortex_core.tools.registry import ToolRegistry
 
@@ -82,6 +83,7 @@ class CortexRuntime:
             apprise_url=settings.apprise_url,
             default_tag=settings.apprise_default_tag,
         )
+        self.domus_telemetry = DomusTelemetryClient()
         self.router = CognitiveRouter(tool_registry=self.tools, slave_power=self.slave_power)
         self.memory = MemoryEngine(database_url=settings.database_url)
         self.ws_gateway = NodeWebSocketGateway()
@@ -92,6 +94,21 @@ class CortexRuntime:
             "notify.send_external",
             "Envia notificacao externa via Apprise (Telegram/E-mail).",
             self.notifier.send,
+        )
+        self.tools.register(
+            "domus.stats.server",
+            "Consulta CPU, RAM, disco e containers do Domus Server.",
+            self.domus_telemetry.server_summary,
+        )
+        self.tools.register(
+            "domus.stats.compute",
+            "Consulta CPU, RAM, GPU RX 7600, VRAM e Ollama do C0rt3x Compute.",
+            self.domus_telemetry.compute_summary,
+        )
+        self.tools.register(
+            "domus.stats.dns",
+            "Consulta metricas de consultas e bloqueios do AdGuard DNS.",
+            self.domus_telemetry.dns_summary,
         )
 
 

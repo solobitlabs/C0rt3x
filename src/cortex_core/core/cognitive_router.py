@@ -32,6 +32,10 @@ class CognitiveRouter:
     _LIGHT_RE = re.compile(r"\b(acend\w*|apag\w*|lig\w*|deslig\w*)\s+(?:a\s+)?luz(?:\s+d[aoe]\s+([\w\s]+))?", re.I)
     _PLAY_RE = re.compile(r"\b(?:reproduz\w*|to(?:c|qu)\w*)\s+(.+?)(?:\s+n[ao]\s+([\w]+))?$", re.I)
     _PAUSE_RE = re.compile(r"\b(paus\w*|par\w*\s+m[uú]sica)\b", re.I)
+    _COMPUTE_RE = re.compile(r"\b(gpu|rx\s*7600|vram|cortex[\s-]*compute|pc\s*gamer|ollama)\b", re.I)
+    _DNS_RE = re.compile(r"\b(adguard|dns|bloqueio\w*)\b", re.I)
+    _SERVER_RE = re.compile(r"\b(servidor|domus\s*server|containers?|cpu|ram|temperatura)\b", re.I)
+    _NOTIFY_RE = re.compile(r"\b(?:notifiqu\w*|avis\w*|mand\w*\s+(?:uma\s+)?notifica[cç][aã]o)\s+(?:que\s+)?(.+)$", re.I)
 
     def __init__(
         self,
@@ -115,6 +119,45 @@ class CognitiveRouter:
                 path="fast_path",
                 response_text=f"Certo, tocando {track} em {zone}.",
                 tool_used="media.play",
+            )
+
+        registered = {t["name"] for t in self._tools.list_tools()}
+
+        # 3b. Fast-Path: Telemetria do Edge GPU (cortex-compute)
+        if self._COMPUTE_RE.search(clean) and "domus.stats.compute" in registered:
+            summary = await self._tools.execute("domus.stats.compute")
+            return RouteDecision(
+                path="fast_path",
+                response_text=str(summary),
+                tool_used="domus.stats.compute",
+            )
+
+        # 3c. Fast-Path: Metricas AdGuard DNS
+        if self._DNS_RE.search(clean) and "domus.stats.dns" in registered:
+            summary = await self._tools.execute("domus.stats.dns")
+            return RouteDecision(
+                path="fast_path",
+                response_text=str(summary),
+                tool_used="domus.stats.dns",
+            )
+
+        # 3d. Fast-Path: Telemetria do Domus Server
+        if self._SERVER_RE.search(clean) and "domus.stats.server" in registered:
+            summary = await self._tools.execute("domus.stats.server")
+            return RouteDecision(
+                path="fast_path",
+                response_text=str(summary),
+                tool_used="domus.stats.server",
+            )
+
+        # 3e. Fast-Path: Notificacao via Apprise
+        if (match := self._NOTIFY_RE.search(clean)) and "notify.send_external" in registered:
+            msg = match.group(1).strip()
+            ok = await self._tools.execute("notify.send_external", title="C0rt3x", body=msg)
+            return RouteDecision(
+                path="fast_path",
+                response_text="Notificacao enviada pelo Apprise." if ok else "Falha ao enviar notificacao via Apprise.",
+                tool_used="notify.send_external",
             )
 
         # 4. Slow-Path: Exige raciocinio aberto no PC Gamer Slave (GPU)
