@@ -17,6 +17,7 @@ logger = logging.getLogger("cortex.worker")
 
 OLLAMA_URL = os.environ.get("WORKER_OLLAMA_URL", "http://ollama:11434").rstrip("/")
 OLLAMA_MODEL = os.environ.get("WORKER_OLLAMA_MODEL", "qwen2.5:7b")
+EMBED_MODEL = os.environ.get("WORKER_EMBED_MODEL", "nomic-embed-text")
 WORKER_API_TOKEN = os.environ.get("WORKER_API_TOKEN", "").strip()
 
 SYSTEM_PROMPT = (
@@ -31,6 +32,10 @@ class InferRequest(BaseModel):
     recent_turns: List[Dict[str, str]] = Field(default_factory=list)
     memories: List[str] = Field(default_factory=list)
     tools: List[Dict[str, str]] = Field(default_factory=list)
+
+
+class EmbedRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=4000)
 
 
 def verify_bearer_token(authorization: Optional[str] = Header(default=None)) -> None:
@@ -100,4 +105,24 @@ async def infer(req: InferRequest, _: None = Depends(verify_bearer_token)) -> Di
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Falha na inferencia local do Ollama",
+        ) from exc
+
+
+@app.post("/api/embed")
+async def embed(req: EmbedRequest, _: None = Depends(verify_bearer_token)) -> Dict[str, Any]:
+    """Gera vetor de embedding via Ollama para memoria semantica."""
+    payload = {"model": EMBED_MODEL, "input": req.text}
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(f"{OLLAMA_URL}/api/embed", json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            embeddings = data.get("embeddings") or []
+            vec = embeddings[0] if embeddings else data.get("embedding") or []
+            return {"embedding": vec, "model": EMBED_MODEL}
+    except httpx.HTTPError as exc:
+        logger.error("Erro ao gerar embedding no Ollama: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Falha ao gerar embedding no Ollama",
         ) from exc

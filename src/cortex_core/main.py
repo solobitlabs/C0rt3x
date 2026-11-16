@@ -3,9 +3,11 @@
 import asyncio
 from contextlib import asynccontextmanager
 import logging
+import re
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+import httpx
 from pydantic import BaseModel, Field
 
 from cortex_core import __version__
@@ -111,6 +113,25 @@ class CortexRuntime:
             self.domus_telemetry.dns_summary,
         )
 
+    async def embed_text(self, text: str) -> Optional[List[float]]:
+        """Solicita embedding ao C0rt3x Compute quando disponivel; retorna None em fallback."""
+        if not self.slave_power.base_url:
+            return None
+        try:
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                resp = await client.post(
+                    f"{self.slave_power.base_url}/api/embed",
+                    json={"text": text},
+                    headers=self.slave_power.auth_headers,
+                )
+                if resp.status_code == 200:
+                    vec = resp.json().get("embedding")
+                    if isinstance(vec, list) and vec:
+                        return [float(x) for x in vec]
+        except Exception as exc:
+            logger.debug("Embedding via slave indisponivel (usando fallback lexical): %s", exc)
+        return None
+
 
 def create_app(settings: Optional[CortexSettings] = None) -> FastAPI:
     cfg = settings or get_settings()
@@ -165,6 +186,11 @@ def create_app(settings: Optional[CortexSettings] = None) -> FastAPI:
             "tools": runtime.tools.list_tools(),
         }
 
+    @app.get("/api/cortex/memories")
+    async def list_memories(user_id: str = "will", limit: int = 20) -> Dict[str, Any]:
+        facts = await runtime.memory.list_semantic_memories(user_id=user_id, limit=limit)
+        return {"user_id": user_id, "count": len(facts), "memories": facts}
+
     @app.post("/api/cortex/interact")
     async def interact(req: InteractRequest) -> Dict[str, Any]:
         if req.node_id:
@@ -186,18 +212,37 @@ def create_app(settings: Optional[CortexSettings] = None) -> FastAPI:
             {"role": t.role, "text": t.text}
             for t in runtime.sessions.get_recent_turns(req.user_id)
         ]
-        memories = await runtime.memory.search_semantic_memories(
-            user_id=req.user_id,
-            query_text=req.transcript,
-            limit=5,
-        )
 
-        decision = await runtime.router.route(
-            transcript=req.transcript,
-            room=req.room,
-            recent_turns=recent_turns,
-            memories=memories,
+        mem_match = re.match(
+            r"^\s*(?:lembr[ae]\w*|memoriz\w*|anot[ae]\w*|guard[ae]\w*)\s+(?:na\s+mem[oó]ria\s+)?(?:que\s+)?(.+)$",
+            req.transcript,
+            re.I,
         )
+        if mem_match:
+            fact = mem_match.group(1).strip()
+            emb = await runtime.embed_text(fact)
+            await runtime.memory.save_semantic_memory(req.user_id, fact, embedding=emb)
+            from cortex_core.core.cognitive_router import RouteDecision
+
+            decision = RouteDecision(
+                path="fast_path",
+                response_text=f"Anotado na memoria: {fact}",
+                tool_used="memory.save",
+            )
+        else:
+            query_emb = await runtime.embed_text(req.transcript)
+            memories = await runtime.memory.search_semantic_memories(
+                user_id=req.user_id,
+                query_embedding=query_emb,
+                query_text=req.transcript,
+                limit=5,
+            )
+            decision = await runtime.router.route(
+                transcript=req.transcript,
+                room=req.room,
+                recent_turns=recent_turns,
+                memories=memories,
+            )
         runtime.sessions.append_turn(
             user_id=req.user_id,
             role="assistant",

@@ -202,3 +202,15 @@ class MemoryEngine:
             reverse=True,
         )
         return [fact for fact, _ in scored_lexical[:limit]]
+
+    async def list_semantic_memories(self, user_id: str, limit: int = 20) -> List[str]:
+        clean_user = user_id.strip().lower()
+        if self._pool is not None:
+            async with self._pool.acquire() as conn:
+                db_rows = await conn.fetch(
+                    "SELECT fact FROM semantic_memories WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2",
+                    clean_user,
+                    limit,
+                )
+                return [r["fact"] for r in db_rows]
+        return [m.fact for m in reversed(self._semantic_fallback) if m.user_id == clean_user][:limit]
